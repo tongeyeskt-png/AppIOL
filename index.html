@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบใบเบิกเลนส์ตาเทียม (IOL) - Pro Edition</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SheetJS สำหรับอ่านไฟล์ Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <!-- ฟอนต์สารบรรณ และ Noto Sans Thai -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { 
+                        sans: ['"Noto Sans Thai"', 'sans-serif'],
+                        print: ['Sarabun', 'sans-serif']
+                    },
+                    colors: {
+                        active: { 50: '#eef2ff', 100: '#e0e7ff', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca' },
+                        vibrant: { 500: '#06b6d4', 600: '#0891b2' }
+                    },
+                    boxShadow: { 'glow': '0 4px 14px 0 rgba(99, 102, 241, 0.39)' }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #f3f4f6 0%, #e0e7ff 100%);
+            background-attachment: fixed; min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.05);
+        }
+        input, select { font-size: 15px !important; transition: all 0.2s ease; }
+        input[type="checkbox"] { width: 1.25rem; height: 1.25rem; cursor: pointer; accent-color: #6366f1; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 10px; }
+        
+        .modal-enter { animation: fadeInScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        @media print {
+            body { background: white !important; font-family: 'Sarabun', sans-serif !important; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            @page { margin: 1cm; size: A4 portrait; }
+            .print-table th, .print-table td {
+                border: 1px solid black !important; padding: 6px 8px !important; font-size: 14pt !important;
+            }
+            .print-header { font-size: 18pt !important; font-weight: bold; text-align: center; margin-bottom: 20px; }
+        }
+        .print-only { display: none; font-family: 'Sarabun', sans-serif; }
+    </style>
+</head>
+<body class="p-4 md:p-6 text-gray-800">
+
+    <div class="max-w-7xl mx-auto no-print space-y-5">
+        
+        <!-- Header Card -->
+        <div class="glass-card rounded-2xl p-6 flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-active-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+            <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-vibrant-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+            
+            <div class="relative z-10 flex items-center gap-4">
+                <div class="bg-gradient-to-br from-active-500 to-vibrant-500 p-3 rounded-2xl shadow-glow text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-gray-800 to-gray-600">
+                        แฟ้มใบเบิกเลนส์ IOL
+                    </h1>
+                    <p class="text-active-600 mt-0.5 text-sm font-medium flex items-center gap-1.5">
+                        <span class="relative flex h-2.5 w-2.5">
+                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-active-400 opacity-75"></span>
+                          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-active-500"></span>
+                        </span>
+                        ระบบกรองหมอยืดหยุ่น V.14 (จิ้มแล้วเจอชัวร์!)
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="mt-5 md:mt-0 flex flex-wrap items-center gap-3 relative z-10">
+                <button onclick="openSettingsModal()" class="bg-white text-gray-700 hover:text-active-600 hover:bg-active-50 p-2.5 rounded-xl border border-gray-200 shadow-sm transition-all hover:shadow hover:-translate-y-0.5 flex items-center gap-2 font-medium">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+                    ตั้งค่า
+                </button>
+
+                <div class="relative group">
+                    <div class="absolute -inset-0.5 bg-gradient-to-r from-active-400 to-vibrant-500 rounded-xl blur opacity-30 group-hover:opacity-70 transition duration-200"></div>
+                    <label for="excel-file" class="relative cursor-pointer bg-white px-5 py-2.5 border border-gray-100 text-active-600 rounded-xl shadow-sm hover:bg-gray-50 transition-all font-semibold text-sm flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-vibrant-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                        + นำเข้าคิว Excel
+                    </label>
+                    <input type="file" id="excel-file" accept=".xlsx, .xls" class="hidden" />
+                </div>
+            </div>
+        </div>
+
+        <!-- แถบตัวกรองข้อมูล -->
+        <div id="filter-bar" class="glass-card rounded-xl p-4 flex flex-wrap gap-4 items-end hidden transition-all border border-indigo-100/50">
+            <div class="flex-1 min-w-[250px]">
+                <label class="block text-xs font-semibold text-active-600 mb-1.5 uppercase tracking-wider flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    ค้นหา (ชื่อ/HN/แพทย์)
+                </label>
+                <input type="text" id="filter-search" oninput="renderTable()" placeholder="พิมพ์ชื่อคนไข้, HN หรือ ชื่อแพทย์..." class="w-full bg-white/90 border border-gray-200 rounded-xl px-4 py-2.5 focus:bg-white focus:ring-2 focus:ring-active-400 focus:border-transparent outline-none transition text-sm shadow-sm">
+            </div>
+            
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-semibold text-active-600 mb-1.5 uppercase tracking-wider flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                    เลือกแพทย์
+                </label>
+                <select id="filter-doctor" onchange="renderTable()" class="w-full bg-white/90 border border-gray-200 rounded-xl px-3 py-2.5 focus:bg-white focus:ring-2 focus:ring-active-400 focus:border-transparent outline-none transition text-sm shadow-sm">
+                    <option value="">👨‍⚕️ ทุกแพทย์ (ไม่กรอง)</option>
+                </select>
+            </div>
+
+            <div class="flex-1 min-w-[150px]">
+                <label class="block text-xs font-semibold text-active-600 mb-1.5 uppercase tracking-wider flex items-center gap-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    วันที่ผ่าตัด
+                </label>
+                <input type="date" id="filter-date" onchange="renderTable()" class="w-full bg-white/90 border border-gray-200 rounded-xl px-3 py-2.5 focus:bg-white focus:ring-2 focus:ring-active-400 focus:border-transparent outline-none transition text-gray-700 text-sm cursor-pointer shadow-sm">
+            </div>
+
+            <div>
+                <button onclick="clearFilters()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 py-2 rounded-xl transition font-medium border border-gray-200 h-[46px] flex items-center gap-2 text-sm shadow-sm hover:shadow">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    ล้างกรอง
+                </button>
+            </div>
+        </div>
+
+        <!-- Print Setup Area -->
+        <div id="print-setup" class="glass-card rounded-2xl p-5 hidden transition-all">
+            <div class="flex items-center gap-2 mb-4 border-b border-gray-100 pb-2">
+                <div class="bg-indigo-100 text-active-600 p-1.5 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-700">เตรียมพิมพ์ใบเบิก <span class="text-sm font-normal text-gray-500">(เฉพาะคนที่ติ๊ก ✔️)</span></h3>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-gray-600">แพทย์ผู้ผ่าตัด (หัวกระดาษ)</label>
+                    <input type="text" id="setup-doctor" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition-all" placeholder="เลือกคิวเพื่ออัปเดตอัตโนมัติ">
+                </div>
+                <div class="space-y-1.5">
+                    <label class="block text-sm font-semibold text-gray-600">วันที่ผ่าตัด (หัวกระดาษ)</label>
+                    <input type="date" id="setup-date" class="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition-all cursor-pointer text-gray-700">
+                </div>
+                <div class="flex items-end">
+                    <button onclick="prepareAndPrint()" class="w-full bg-gradient-to-r from-active-500 to-vibrant-500 hover:from-active-600 hover:to-vibrant-600 text-white font-bold py-2.5 px-4 rounded-xl shadow-glow transform transition-all active:scale-95 flex items-center justify-center gap-2 h-[46px]">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        สร้างใบเบิกและพิมพ์
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Container -->
+        <div class="glass-card rounded-2xl overflow-hidden shadow-glass border border-white/50">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-600 min-w-max">
+                    <thead class="text-xs uppercase bg-slate-800 text-slate-200 border-b border-slate-700 tracking-wider">
+                        <tr>
+                            <th class="px-3 py-4 text-center w-14 border-r border-slate-700">
+                                <div class="flex justify-center" title="เลือกทั้งหมด (เฉพาะที่มองเห็น)">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" class="rounded text-active-500 focus:ring-active-500 bg-slate-700 border-slate-600">
+                                </div>
+                            </th>
+                            <th class="px-3 py-4 text-center font-medium"><span class="text-vibrant-500 mr-1">●</span>วันที่นัดถัดไป</th>
+                            <th class="px-4 py-4 font-medium"><span class="text-vibrant-500 mr-1">●</span>ชื่อผู้รับบริการ</th>
+                            <th class="px-3 py-4 text-center font-medium"><span class="text-vibrant-500 mr-1">●</span>HN</th>
+                            <th class="px-3 py-4 text-center font-medium border-r border-slate-700 w-44"><span class="text-vibrant-500 mr-1">●</span>แพทย์</th>
+                            <th class="px-3 py-4 text-center font-medium w-[150px]"><span class="text-amber-400 mr-1">✏️</span>วันที่ผ่าตัด</th>
+                            <th class="px-3 py-4 text-center font-medium w-40"><span class="text-amber-400 mr-1">✏️</span>ชนิดเลนส์</th>
+                            <th class="px-3 py-4 text-center font-medium w-32"><span class="text-amber-400 mr-1">✏️</span>เบอร์เลนส์</th>
+                            <th class="px-3 py-4 text-center font-medium w-32"><span class="text-amber-400 mr-1">✏️</span>สถานะเลนส์</th>
+                            <th class="px-3 py-4 text-center w-14 no-print text-slate-400">ลบ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-gray-100 bg-white/60">
+                        <!-- ข้อมูลตาราง -->
+                    </tbody>
+                </table>
+                <div id="no-results-msg" class="hidden text-center py-10 text-gray-500 bg-white/50">
+                    ไม่พบรายชื่อที่ค้นหา 🕵️‍♂️ ลองเปลี่ยนคำค้นหาหรือล้างตัวกรองดูนะ
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= ส่วนหน้าจอพิมพ์ ================= -->
+    <div class="print-only">
+        <div class="print-header">ใบเบิกเลนส์แก้วตาเทียมห้องผ่าตัดตา</div>
+        <div class="flex justify-between items-center mb-6 text-lg">
+            <div><b>แพทย์</b> <span id="print-doctor-name" class="ml-2">........................................</span></div>
+            <div><b>วันที่ผ่าตัด</b> <span id="print-op-date" class="ml-2">........................................</span></div>
+        </div>
+        <table class="w-full text-left print-table border-collapse">
+            <thead>
+                <tr>
+                    <th class="w-24 text-center">วันที่เขียน</th>
+                    <th>ชื่อผู้ป่วย</th>
+                    <th class="w-24 text-center">HN</th>
+                    <th class="w-24 text-center">XC1<br><span class="text-sm font-normal">สปสช</span></th>
+                    <th class="w-24 text-center">Eyhance</th>
+                    <th class="w-24 text-center">Avansee</th>
+                </tr>
+            </thead>
+            <tbody id="print-tbody"></tbody>
+        </table>
+        <div class="mt-12 flex justify-end">
+            <div class="text-center">
+                <p class="mb-8">ผู้เบิก ................................................................</p>
+                <p>(................................................................)</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL ตั้งค่า ================= -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center no-print">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-enter mx-4 border border-white">
+            <div class="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50 rounded-t-2xl">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <div class="bg-active-100 p-2 rounded-lg text-active-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /></svg>
+                    </div>
+                    ตั้งค่าตัวเลือก (ดรอปดาวน์)
+                </h2>
+                <button onclick="closeSettingsModal()" class="text-gray-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-6 bg-white">
+                <div>
+                    <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">👨‍⚕️ รายชื่อแพทย์</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="new-doctor-input" placeholder="พิมพ์ชื่อเพิ่ม..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition">
+                        <button onclick="addDoctor()" class="bg-active-500 hover:bg-active-600 text-white px-4 py-2 rounded-xl shadow-md transition-colors font-medium">+</button>
+                    </div>
+                    <ul id="settings-doctor-list" class="space-y-2 max-h-56 overflow-y-auto pr-2"></ul>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">👁️ รุ่นเลนส์</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input type="text" id="new-lens-input" placeholder="พิมพ์ยี่ห้อเพิ่ม..." class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition">
+                        <button onclick="addLens()" class="bg-active-500 hover:bg-active-600 text-white px-4 py-2 rounded-xl shadow-md transition-colors font-medium">+</button>
+                    </div>
+                    <ul id="settings-lens-list" class="space-y-2 max-h-56 overflow-y-auto pr-2"></ul>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-2xl flex justify-end">
+                <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2.5 rounded-xl shadow-md transition-all font-medium">เสร็จสิ้น</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= Javascript ================= -->
+    <script>
+        let appData = [];
+        const defaultDoctors = ["พญ.วรัญญา หล่อพิเชียร", "พญ.สราลัย อยู่สำราญ", "นพ.นิธิรัชต์"];
+        const defaultLenses = ["XC1", "Eyhance", "Avansee", "Nanex"];
+
+        let doctorList = JSON.parse(localStorage.getItem('iol_clinic_doctors')) || defaultDoctors;
+        let lensList = JSON.parse(localStorage.getItem('iol_clinic_lenses')) || defaultLenses;
+
+        function saveSettings() {
+            localStorage.setItem('iol_clinic_doctors', JSON.stringify(doctorList));
+            localStorage.setItem('iol_clinic_lenses', JSON.stringify(lensList));
+            renderSettings(); 
+            populateFilterDoctorOptions(); 
+            renderTable();    
+        }
+        function addDoctor() {
+            const input = document.getElementById('new-doctor-input');
+            const val = input.value.trim();
+            if(val && !doctorList.includes(val)) { doctorList.push(val); input.value = ''; saveSettings(); }
+        }
+        function deleteDoctor(idx) {
+            if(confirm(`ลบชื่อ "${doctorList[idx]}" ออกจากระบบไหม?`)) { doctorList.splice(idx, 1); saveSettings(); }
+        }
+        function addLens() {
+            const input = document.getElementById('new-lens-input');
+            const val = input.value.trim();
+            if(val && !lensList.includes(val)) { lensList.push(val); input.value = ''; saveSettings(); }
+        }
+        function deleteLens(idx) {
+            if(confirm(`ลบเลนส์รุ่น "${lensList[idx]}" ออกจากระบบไหม?`)) { lensList.splice(idx, 1); saveSettings(); }
+        }
+
+        function openSettingsModal() { renderSettings(); document.getElementById('settings-modal').classList.remove('hidden'); }
+        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+        function renderSettings() {
+            document.getElementById('settings-doctor-list').innerHTML = doctorList.map((doc, idx) => `
+                <li class="flex justify-between items-center bg-white border border-gray-100 px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition">
+                    <span class="text-sm font-medium text-gray-700">${doc}</span>
+                    <button onclick="deleteDoctor(${idx})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                </li>`).join('');
+            document.getElementById('settings-lens-list').innerHTML = lensList.map((lens, idx) => `
+                <li class="flex justify-between items-center bg-white border border-gray-100 px-4 py-2.5 rounded-xl shadow-sm hover:shadow transition">
+                    <span class="text-sm font-medium text-gray-700">${lens}</span>
+                    <button onclick="deleteLens(${idx})" class="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded-lg transition"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                </li>`).join('');
+        }
+
+        function getTodayString() {
+            const today = new Date();
+            return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
+        function getNextDayString(isoDate) {
+            if (!isoDate || !isoDate.match(/^\d{4}-\d{2}-\d{2}$/)) return '';
+            const d = new Date(isoDate); d.setDate(d.getDate() + 1);
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        function convertToThaiDateShort(iso) {
+            if(!iso) return '';
+            const p = iso.split('-'); if(p.length !== 3) return iso;
+            const m = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${String(parseInt(p[0]) + 543).slice(-2)}`;
+        }
+        function convertToThaiDateFull(iso) {
+            if(!iso) return '........................................';
+            const p = iso.split('-'); if(p.length !== 3) return iso;
+            const m = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+            return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${parseInt(p[0]) + 543}`;
+        }
+        function parseExcelDateToISO(exDate) {
+            if (!exDate) return '';
+            if (typeof exDate === 'number') {
+                const d = new Date(new Date(1900, 0, 1).getTime() + (exDate - 2) * 86400000);
+                if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            }
+            return exDate.toString(); 
+        }
+
+        function populateFilterDoctorOptions() {
+            const filterDocSelect = document.getElementById('filter-doctor');
+            const currentVal = filterDocSelect.value;
+            let options = `<option value="">👨‍⚕️ ทุกแพทย์ (ไม่กรอง)</option>`;
+            doctorList.forEach(doc => {
+                options += `<option value="${doc}">${doc}</option>`;
+            });
+            filterDocSelect.innerHTML = options;
+            filterDocSelect.value = currentVal;
+        }
+
+        window.onload = function() {
+            document.getElementById('setup-date').value = getTodayString();
+            populateFilterDoctorOptions();
+            
+            // V.14 (อัปเดตระบบค้นหาให้หาหมอเจอ) 
+            // เปลี่ยน key ใหม่จะได้เริ่มสดชื่น หรือถ้าต้องอยากใช้ข้อมูลเดิมก็โหลดใหม่รอบนึงน้า
+            const savedData = localStorage.getItem('iol_clinic_data_v14'); 
+            if (savedData) { appData = JSON.parse(savedData); renderTable(); } 
+            else { showEmptyState(); }
+        };
+
+        document.getElementById('excel-file').addEventListener('change', function(e) {
+            const file = e.target.files[0]; if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const rawExcelData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+                
+                let addedCount = 0;
+                let skipCount = 0;
+
+                rawExcelData.forEach(row => {
+                    let nextDateRaw = row['วันที่นัดถัดไป'] || row['วันนัดถัดไป'] || row['วันนัด'] || '';
+                    let cleanNextDateISO = parseExcelDateToISO(nextDateRaw);
+
+                    let rawHN = '';
+                    for (const key in row) { if (key.toUpperCase().includes('HN') || key.toUpperCase() === 'H.N.') { rawHN = row[key]; break; } }
+                    let patientName = row['ชื่อผู้รับบริการ'] || row['ชื่อ-สกุล'] || row['ชื่อผู้ป่วย'] || row['ชื่อ'] || '';
+                    
+                    if(!patientName) return; 
+
+                    const isDuplicate = appData.some(p => p.hn === rawHN && p.name === patientName);
+                    if (isDuplicate) { skipCount++; return; }
+
+                    let rawDoctor = row['แพทย์'] || row['หมอ'] || '';
+                    let cleanDoctor = rawDoctor.trim();
+                    if (cleanDoctor) {
+                        let tempName = cleanDoctor.replace(/\s+/g, ' '); 
+                        if (tempName.includes('แพทย์หญิง') || tempName.includes('พญ')) {
+                            let nameOnly = tempName.replace(/แพทย์หญิง|พญ\.?/g, '').trim();
+                            cleanDoctor = 'พญ.' + nameOnly;
+                        } else if (tempName.includes('นายแพทย์') || tempName.includes('นพ')) {
+                            let nameOnly = tempName.replace(/นายแพทย์|นพ\.?/g, '').trim();
+                            cleanDoctor = 'นพ.' + nameOnly;
+                        }
+                        const matchedDoc = doctorList.find(doc => doc.includes(cleanDoctor.replace(/^พญ\.|^นพ\./, '').trim()));
+                        if (matchedDoc) cleanDoctor = matchedDoc;
+                    }
+
+                    let autoOpDate = getNextDayString(cleanNextDateISO) || getTodayString();
+
+                    appData.push({
+                        selected: false,
+                        nextDate: cleanNextDateISO,
+                        name: patientName,
+                        hn: rawHN,
+                        doctor: cleanDoctor,
+                        opDate: autoOpDate, 
+                        lensType: '', lensPower: '',
+                        showLens2: false, 
+                        lensType2: '', lensPower2: '',
+                        status: ''
+                    });
+                    addedCount++;
+                });
+
+                saveData(); 
+                clearFilters(false);
+                renderTable(); 
+                document.getElementById('excel-file').value = ''; 
+                
+                alert(`โหลดข้อมูลเสร็จสิ้น! \nเพิ่มรายชื่อใหม่: ${addedCount} คน\nข้ามรายชื่อซ้ำ: ${skipCount} คน`);
+            };
+            reader.readAsArrayBuffer(file);
+        });
+
+        function saveData() { localStorage.setItem('iol_clinic_data_v14', JSON.stringify(appData)); }
+
+        function updateField(originalIndex, field, value) {
+            appData[originalIndex][field] = value; saveData(); 
+            if(field === 'selected') { checkSelectAllStatus(); updateHeaderSetup(); }
+        }
+
+        function removeLens2(originalIndex) {
+            appData[originalIndex].showLens2 = false;
+            appData[originalIndex].lensType2 = '';
+            appData[originalIndex].lensPower2 = '';
+            saveData(); renderTable();
+        }
+
+        function toggleSelectAll(isChecked) {
+            const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+            const filterDoc = document.getElementById('filter-doctor').value;
+            const filterDate = document.getElementById('filter-date').value;
+
+            appData.forEach((row) => {
+                let matchSearch = filterSearch === '' || 
+                                  row.name.toLowerCase().includes(filterSearch) || 
+                                  row.hn.toLowerCase().includes(filterSearch) ||
+                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
+                
+                // 💥 แก้ไขจุดที่บั๊ก: เปลี่ยนจากการเช็คเป๊ะๆ เป็นการเช็คแบบมีส่วนประกอบ (Includes)
+                let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
+                
+                let matchDate = filterDate === '' || row.opDate === filterDate;
+                
+                if(matchSearch && matchDoc && matchDate) {
+                    row.selected = isChecked;
+                }
+            });
+            saveData(); renderTable(); updateHeaderSetup();
+        }
+
+        function clearFilters(shouldRender = true) {
+            document.getElementById('filter-search').value = '';
+            document.getElementById('filter-doctor').value = '';
+            document.getElementById('filter-date').value = '';
+            if(shouldRender) renderTable();
+        }
+
+        function checkSelectAllStatus() {
+            const selectAllBox = document.getElementById('selectAllCheckbox');
+            if(appData.length === 0) { selectAllBox.checked = false; return; }
+            
+            const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+            const filterDoc = document.getElementById('filter-doctor').value;
+            const filterDate = document.getElementById('filter-date').value;
+
+            const visibleRows = appData.filter(row => {
+                let matchSearch = filterSearch === '' || 
+                                  row.name.toLowerCase().includes(filterSearch) || 
+                                  row.hn.toLowerCase().includes(filterSearch) ||
+                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
+                
+                // 💥 แก้มจุดที่บั๊กเช่นกัน
+                let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
+                
+                let matchDate = filterDate === '' || row.opDate === filterDate;
+                return matchSearch && matchDoc && matchDate;
+            });
+
+            if(visibleRows.length === 0) {
+                selectAllBox.checked = false;
+            } else {
+                selectAllBox.checked = visibleRows.every(row => row.selected);
+            }
+        }
+
+        function updateHeaderSetup() {
+            const selectedPatient = appData.find(item => item.selected);
+            if(selectedPatient) {
+                if(selectedPatient.doctor) document.getElementById('setup-doctor').value = selectedPatient.doctor;
+                if(selectedPatient.opDate) document.getElementById('setup-date').value = selectedPatient.opDate;
+            }
+        }
+
+        function deleteRow(originalIndex) {
+            if (confirm('ลบรายชื่อ "' + appData[originalIndex].name + '" ออกจากแฟ้ม?')) {
+                appData.splice(originalIndex, 1); saveData(); renderTable();
+            }
+        }
+
+        function showEmptyState() {
+            document.getElementById('print-setup').classList.add('hidden');
+            document.getElementById('filter-bar').classList.add('hidden');
+            document.getElementById('table-body').innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-6 py-16 text-center text-gray-400 bg-white/50 backdrop-blur-sm">
+                        <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        </div>
+                        <p class="text-xl font-semibold text-gray-600">ยังไม่มีคิวในแฟ้มเลย</p>
+                        <p class="text-sm mt-1">อัปโหลดไฟล์ Excel เพื่อดึงรายชื่อเข้ามาจัดการได้เลย</p>
+                    </td>
+                </tr>`;
+        }
+
+        function renderTable() {
+            if (appData.length === 0) { showEmptyState(); return; }
+            
+            document.getElementById('print-setup').classList.remove('hidden');
+            document.getElementById('filter-bar').classList.remove('hidden');
+            
+            const tbody = document.getElementById('table-body');
+            const noResultsMsg = document.getElementById('no-results-msg');
+            
+            const filterSearch = document.getElementById('filter-search').value.toLowerCase();
+            const filterDoc = document.getElementById('filter-doctor').value;
+            const filterDate = document.getElementById('filter-date').value;
+
+            const filteredData = appData.map((row, index) => ({ ...row, originalIndex: index })).filter(row => {
+                let matchSearch = filterSearch === '' || 
+                                  row.name.toLowerCase().includes(filterSearch) || 
+                                  row.hn.toLowerCase().includes(filterSearch) ||
+                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
+                
+                // 💥 เปลี่ยนการกรองดรอปดาวน์ให้ฉลาดขึ้น ตรงนี้แหละตัวการ!
+                let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
+                
+                let matchDate = filterDate === '' || row.opDate === filterDate;
+                return matchSearch && matchDoc && matchDate;
+            });
+
+            let html = '';
+
+            filteredData.forEach((row) => {
+                const originalIndex = row.originalIndex;
+                const rowClass = row.selected ? 'bg-indigo-50/70 hover:bg-indigo-100/70 transition duration-150' : 'bg-transparent hover:bg-gray-50/80 transition duration-150';
+
+                let doctorOptions = `<option value="">- เลือกแพทย์ -</option>`;
+                doctorList.forEach(docName => {
+                    const isSelected = (row.doctor === docName) ? 'selected' : '';
+                    doctorOptions += `<option value="${docName}" ${isSelected}>${docName}</option>`;
+                });
+                if (row.doctor && !doctorList.includes(row.doctor)) {
+                    doctorOptions += `<option value="${row.doctor}" selected>${row.doctor}</option>`;
+                }
+
+                let lensOptions1 = `<option value="">- เลือกรุ่น -</option>`;
+                let lensOptions2 = `<option value="">- เลือกรุ่น (สำรอง) -</option>`;
+                lensList.forEach(lens => {
+                    lensOptions1 += `<option value="${lens}" ${row.lensType === lens ? 'selected' : ''}>${lens}</option>`;
+                    lensOptions2 += `<option value="${lens}" ${row.lensType2 === lens ? 'selected' : ''}>${lens}</option>`;
+                });
+                if (row.lensType && !lensList.includes(row.lensType)) lensOptions1 += `<option value="${row.lensType}" selected>${row.lensType}</option>`;
+                if (row.lensType2 && !lensList.includes(row.lensType2)) lensOptions2 += `<option value="${row.lensType2}" selected>${row.lensType2}</option>`;
+
+                let displayNextDate = row.nextDate;
+                if(row.nextDate && row.nextDate.includes('-')) displayNextDate = convertToThaiDateShort(row.nextDate);
+
+                html += `
+                    <tr class="${rowClass} group">
+                        <td class="px-3 py-3 text-center border-r border-gray-100 align-top pt-5">
+                            <input type="checkbox" ${row.selected ? 'checked' : ''} onchange="updateField(${originalIndex}, 'selected', this.checked)" class="w-5 h-5 rounded text-active-500 focus:ring-active-500 border-gray-300">
+                        </td>
+                        <td class="px-3 py-3 text-center align-top pt-5 whitespace-nowrap text-gray-600">${displayNextDate}</td>
+                        <td class="px-4 py-3 align-top pt-5 font-semibold text-gray-800">${row.name}</td>
+                        <td class="px-3 py-3 text-center align-top pt-5 font-mono text-sm text-gray-500">${row.hn}</td>
+                        
+                        <td class="px-2 py-3 border-r border-gray-100 align-top">
+                            <select onchange="updateField(${originalIndex}, 'doctor', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 focus:border-transparent outline-none transition">
+                                ${doctorOptions}
+                            </select>
+                        </td>
+
+                        <td class="px-2 py-3 align-top">
+                            <input type="date" value="${row.opDate}" onchange="updateField(${originalIndex}, 'opDate', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 focus:border-transparent outline-none transition cursor-pointer text-center text-gray-700">
+                        </td>
+                        
+                        <td class="px-2 py-3 align-top">
+                            <div class="flex flex-col gap-1.5">
+                                <select onchange="updateField(${originalIndex}, 'lensType', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition">
+                                    ${lensOptions1}
+                                </select>
+                                ${row.showLens2 ? `
+                                    <select onchange="updateField(${originalIndex}, 'lensType2', this.value)" class="w-full bg-orange-50/70 border border-orange-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-orange-800">
+                                        ${lensOptions2}
+                                    </select>
+                                ` : ''}
+                            </div>
+                        </td>
+
+                        <td class="px-2 py-3 align-top">
+                            <div class="flex flex-col gap-1.5 items-start">
+                                <input type="text" value="${row.lensPower}" onchange="updateField(${originalIndex}, 'lensPower', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition text-center font-bold text-active-700 placeholder-gray-300" placeholder="+21.5">
+                                
+                                ${row.showLens2 ? `
+                                    <div class="flex items-center gap-1 w-full">
+                                        <input type="text" value="${row.lensPower2}" onchange="updateField(${originalIndex}, 'lensPower2', this.value)" class="w-full bg-orange-50/70 border border-orange-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-center font-bold text-orange-700 placeholder-orange-300" placeholder="+22.0">
+                                        <button onclick="removeLens2(${originalIndex})" class="text-red-400 hover:text-red-600 p-1" title="ลบเลนส์สำรอง">✖️</button>
+                                    </div>
+                                ` : `
+                                    <button onclick="updateField(${originalIndex}, 'showLens2', true); renderTable();" class="text-[12px] text-active-600 hover:text-active-800 font-medium bg-active-50 hover:bg-active-100 px-2 py-1.5 rounded-lg w-full border border-active-100 transition shadow-sm">+ เลนส์สำรอง</button>
+                                `}
+                            </div>
+                        </td>
+
+                        <td class="px-2 py-3 align-top">
+                            <select onchange="updateField(${originalIndex}, 'status', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 focus:border-transparent outline-none transition font-medium ${row.status === 'รอเลนส์' ? 'text-red-500 bg-red-50/50' : row.status === 'มีเลนส์แล้ว' ? 'text-emerald-600 bg-emerald-50/50' : 'text-gray-600'}">
+                                <option value="" ${row.status === '' ? 'selected' : ''}>- สถานะ -</option>
+                                <option value="รอเลนส์" ${row.status === 'รอเลนส์' ? 'selected' : ''}>รอเลนส์</option>
+                                <option value="มีเลนส์แล้ว" ${row.status === 'มีเลนส์แล้ว' ? 'selected' : ''}>มีเลนส์แล้ว</option>
+                            </select>
+                        </td>
+
+                        <td class="px-2 py-3 text-center no-print align-top pt-5">
+                            <button onclick="deleteRow(${originalIndex})" class="text-gray-300 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors opacity-0 group-hover:opacity-100" title="ลบรายชื่อนี้">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            
+            if(filteredData.length === 0) {
+                noResultsMsg.classList.remove('hidden');
+                document.getElementById('selectAllCheckbox').disabled = true;
+            } else {
+                noResultsMsg.classList.add('hidden');
+                document.getElementById('selectAllCheckbox').disabled = false;
+            }
+            
+            checkSelectAllStatus(); 
+        }
+
+        function prepareAndPrint() {
+            const patientsToPrint = appData.filter(row => row.selected);
+
+            if (patientsToPrint.length === 0) {
+                alert('⚠️ อย่าลืมติ๊กถูก ✔️ หน้าชื่อคนไข้ที่ต้องการปริ้นท์ใบเบิกก่อนนะครับ!');
+                return;
+            }
+
+            const docName = document.getElementById('setup-doctor').value || "........................................";
+            const rawSetupDate = document.getElementById('setup-date').value;
+            const opDate = convertToThaiDateFull(rawSetupDate);
+            
+            document.getElementById('print-doctor-name').innerText = docName;
+            document.getElementById('print-op-date').innerText = opDate;
+
+            let printHtml = '';
+            
+            patientsToPrint.forEach(row => {
+                let xc1 = [], eyhance = [], avansee = [];
+
+                const processLensForPrint = (type, power) => {
+                    if(!type) return;
+                    let p = power ? `+${power.replace('+', '')}` : '';
+                    if(type === 'XC1') xc1.push(p);
+                    else if(type === 'Eyhance') eyhance.push(p);
+                    else {
+                        if(type === 'Avansee') avansee.push(p);
+                        else avansee.push(`<span class="text-xs text-gray-500 font-normal">${type}</span> ${p}`);
+                    }
+                };
+
+                processLensForPrint(row.lensType, row.lensPower);
+                if(row.showLens2) processLensForPrint(row.lensType2, row.lensPower2);
+
+                let formattedOpDate = convertToThaiDateShort(row.opDate);
+
+                printHtml += `
+                    <tr>
+                        <td class="text-center">${formattedOpDate}</td>
+                        <td>${row.name}</td>
+                        <td class="text-center">${row.hn}</td>
+                        <td class="text-center font-bold leading-tight py-2">${xc1.join('<br>')}</td>
+                        <td class="text-center font-bold leading-tight py-2">${eyhance.join('<br>')}</td>
+                        <td class="text-center font-bold leading-tight py-2">${avansee.join('<br>')}</td>
+                    </tr>
+                `;
+            });
+            
+            const emptyRowsCount = Math.max(0, 15 - patientsToPrint.length);
+            for(let i=0; i<emptyRowsCount; i++) {
+                printHtml += `<tr><td class="h-8"></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+            }
+
+            document.getElementById('print-tbody').innerHTML = printHtml;
+            window.print(); 
+        }
+    </script>
+</body>
+</html>
+
+
