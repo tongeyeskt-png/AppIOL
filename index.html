@@ -47,14 +47,13 @@
         .modal-enter { animation: fadeInScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-        /* ================= สไตล์หน้าพิมพ์ V.18 (ลดขนาด 9pt ตัดวันที่ออก) ================= */
+        /* ================= สไตล์หน้าพิมพ์ V.18-19 (ลดขนาด 9pt ตัดวันที่ออก) ================= */
         @media print {
             body { background: white !important; font-family: 'Sarabun', sans-serif !important; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             @page { margin: 1cm; size: A4 portrait; }
             
-            /* หัวตารางขนาดเท่าเดิม 11pt */
             .print-table th {
                 border: 1px solid black !important; 
                 padding: 4px 6px !important; 
@@ -66,7 +65,6 @@
                 color-adjust: exact;
             }
             
-            /* เนื้อหาในตารางลดเหลือ 9pt ตามรีเควส */
             .print-table td {
                 border: 1px solid black !important; 
                 padding: 4px 6px !important; 
@@ -78,7 +76,6 @@
             .print-header { font-size: 16pt !important; font-weight: bold; text-align: center; margin-bottom: 12px; }
             .print-subheader { font-size: 11pt !important; margin-bottom: 12px; }
             
-            /* บังคับไม่ให้ชื่อตัดขึ้นบรรทัดใหม่ */
             .nowrap-name { white-space: nowrap !important; overflow: hidden; }
         }
         .print-only { display: none; font-family: 'Sarabun', sans-serif; }
@@ -109,7 +106,7 @@
                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-active-400 opacity-75"></span>
                           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-active-500"></span>
                         </span>
-                        อัปเดตตารางปริ้นท์ 9pt ตัดวันที่ออก!
+                        อัปเดตแป้นพิมพ์ตัวเลข (Numpad) พิมพ์ไวขึ้น!
                     </p>
                 </div>
             </div>
@@ -227,7 +224,7 @@
         </div>
     </div>
 
-    <!-- ================= ส่วนหน้าจอพิมพ์ (ตารางเปล่าๆ รอรับการสร้างแบบ Dynamic) ================= -->
+    <!-- ================= ส่วนหน้าจอพิมพ์ ================= -->
     <div class="print-only">
         <div class="print-header">ใบเบิกเลนส์แก้วตาเทียมห้องผ่าตัดตา</div>
         <div class="flex justify-between items-center print-subheader">
@@ -237,10 +234,10 @@
         
         <table class="w-full text-left print-table border-collapse">
             <thead id="print-thead">
-                <!-- หัวตารางจะถูกแทรกด้วย Javascript -->
+                <!-- หัวตาราง -->
             </thead>
             <tbody id="print-tbody">
-                <!-- ข้อมูลจะถูกแทรกด้วย Javascript -->
+                <!-- ข้อมูลตาราง -->
             </tbody>
         </table>
         
@@ -304,9 +301,7 @@
         function saveSettings() {
             localStorage.setItem('iol_clinic_doctors', JSON.stringify(doctorList));
             localStorage.setItem('iol_clinic_lenses', JSON.stringify(lensList));
-            renderSettings(); 
-            populateFilterDoctorOptions(); 
-            renderTable();    
+            renderSettings(); populateFilterDoctorOptions(); renderTable();    
         }
         function addDoctor() {
             const input = document.getElementById('new-doctor-input');
@@ -349,17 +344,17 @@
             const d = new Date(isoDate); d.setDate(d.getDate() + 1);
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
-        function convertToThaiDateShort(iso) {
-            if(!iso) return '';
-            const p = iso.split('-'); if(p.length !== 3) return iso;
-            const m = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
-            return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${String(parseInt(p[0]) + 543).slice(-2)}`;
-        }
         function convertToThaiDateFull(iso) {
             if(!iso) return '........................................';
             const p = iso.split('-'); if(p.length !== 3) return iso;
             const m = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
             return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${parseInt(p[0]) + 543}`;
+        }
+        function convertToThaiDateShort(iso) {
+            if(!iso) return '';
+            const p = iso.split('-'); if(p.length !== 3) return iso;
+            const m = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${String(parseInt(p[0]) + 543).slice(-2)}`;
         }
         function parseExcelDateToISO(exDate) {
             if (!exDate) return '';
@@ -374,9 +369,7 @@
             const filterDocSelect = document.getElementById('filter-doctor');
             const currentVal = filterDocSelect.value;
             let options = `<option value="">👨‍⚕️ ทุกแพทย์ (ไม่กรอง)</option>`;
-            doctorList.forEach(doc => {
-                options += `<option value="${doc}">${doc}</option>`;
-            });
+            doctorList.forEach(doc => { options += `<option value="${doc}">${doc}</option>`; });
             filterDocSelect.innerHTML = options;
             filterDocSelect.value = currentVal;
         }
@@ -384,8 +377,7 @@
         window.onload = function() {
             document.getElementById('setup-date').value = getTodayString();
             populateFilterDoctorOptions();
-            
-            const savedData = localStorage.getItem('iol_clinic_data_v16'); 
+            const savedData = localStorage.getItem('iol_clinic_data_v16'); // ดึงของเก่า V.16 มาใช้ได้เลย
             if (savedData) { appData = JSON.parse(savedData); renderTable(); } 
             else { showEmptyState(); }
         };
@@ -399,8 +391,7 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const rawExcelData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 
-                let addedCount = 0;
-                let skipCount = 0;
+                let addedCount = 0; let skipCount = 0;
 
                 rawExcelData.forEach(row => {
                     let nextDateRaw = row['วันที่นัดถัดไป'] || row['วันนัดถัดไป'] || row['วันนัด'] || '';
@@ -430,28 +421,22 @@
                         if (matchedDoc) cleanDoctor = matchedDoc;
                     }
 
-                    let autoOpDate = getNextDayString(cleanNextDateISO) || getTodayString();
-
                     appData.push({
                         selected: false,
                         nextDate: cleanNextDateISO,
                         name: patientName,
                         hn: rawHN,
                         doctor: cleanDoctor,
-                        opDate: autoOpDate, 
+                        opDate: getNextDayString(cleanNextDateISO) || getTodayString(), 
                         lensType: '', lensPower: '',
-                        showLens2: false, 
-                        lensType2: '', lensPower2: '',
+                        showLens2: false, lensType2: '', lensPower2: '',
                         status: ''
                     });
                     addedCount++;
                 });
 
-                saveData(); 
-                clearFilters(false);
-                renderTable(); 
+                saveData(); clearFilters(false); renderTable(); 
                 document.getElementById('excel-file').value = ''; 
-                
                 alert(`โหลดข้อมูลเสร็จสิ้น! \nเพิ่มรายชื่อใหม่: ${addedCount} คน\nข้ามรายชื่อซ้ำ: ${skipCount} คน`);
             };
             reader.readAsArrayBuffer(file);
@@ -477,17 +462,10 @@
             const filterDate = document.getElementById('filter-date').value;
 
             appData.forEach((row) => {
-                let matchSearch = filterSearch === '' || 
-                                  row.name.toLowerCase().includes(filterSearch) || 
-                                  row.hn.toLowerCase().includes(filterSearch) ||
-                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
-                
+                let matchSearch = filterSearch === '' || row.name.toLowerCase().includes(filterSearch) || row.hn.toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
-                
-                if(matchSearch && matchDoc && matchDate) {
-                    row.selected = isChecked;
-                }
+                if(matchSearch && matchDoc && matchDate) row.selected = isChecked;
             });
             saveData(); renderTable(); updateHeaderSetup();
         }
@@ -508,20 +486,14 @@
             const filterDate = document.getElementById('filter-date').value;
 
             const visibleRows = appData.filter(row => {
-                let matchSearch = filterSearch === '' || 
-                                  row.name.toLowerCase().includes(filterSearch) || 
-                                  row.hn.toLowerCase().includes(filterSearch) ||
-                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
+                let matchSearch = filterSearch === '' || row.name.toLowerCase().includes(filterSearch) || row.hn.toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 return matchSearch && matchDoc && matchDate;
             });
 
-            if(visibleRows.length === 0) {
-                selectAllBox.checked = false;
-            } else {
-                selectAllBox.checked = visibleRows.every(row => row.selected);
-            }
+            if(visibleRows.length === 0) selectAllBox.checked = false;
+            else selectAllBox.checked = visibleRows.every(row => row.selected);
         }
 
         function updateHeaderSetup() {
@@ -555,7 +527,6 @@
 
         function renderTable() {
             if (appData.length === 0) { showEmptyState(); return; }
-            
             document.getElementById('print-setup').classList.remove('hidden');
             document.getElementById('filter-bar').classList.remove('hidden');
             
@@ -567,10 +538,7 @@
             const filterDate = document.getElementById('filter-date').value;
 
             const filteredData = appData.map((row, index) => ({ ...row, originalIndex: index })).filter(row => {
-                let matchSearch = filterSearch === '' || 
-                                  row.name.toLowerCase().includes(filterSearch) || 
-                                  row.hn.toLowerCase().includes(filterSearch) ||
-                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
+                let matchSearch = filterSearch === '' || row.name.toLowerCase().includes(filterSearch) || row.hn.toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 return matchSearch && matchDoc && matchDate;
@@ -583,13 +551,8 @@
                 const rowClass = row.selected ? 'bg-indigo-50/70 hover:bg-indigo-100/70 transition duration-150' : 'bg-transparent hover:bg-gray-50/80 transition duration-150';
 
                 let doctorOptions = `<option value="">- เลือกแพทย์ -</option>`;
-                doctorList.forEach(docName => {
-                    const isSelected = (row.doctor === docName) ? 'selected' : '';
-                    doctorOptions += `<option value="${docName}" ${isSelected}>${docName}</option>`;
-                });
-                if (row.doctor && !doctorList.includes(row.doctor)) {
-                    doctorOptions += `<option value="${row.doctor}" selected>${row.doctor}</option>`;
-                }
+                doctorList.forEach(docName => { doctorOptions += `<option value="${docName}" ${row.doctor === docName ? 'selected' : ''}>${docName}</option>`; });
+                if (row.doctor && !doctorList.includes(row.doctor)) doctorOptions += `<option value="${row.doctor}" selected>${row.doctor}</option>`;
 
                 let lensOptions1 = `<option value="">- เลือกรุ่น -</option>`;
                 let lensOptions2 = `<option value="">- เลือกรุ่น (สำรอง) -</option>`;
@@ -637,11 +600,12 @@
 
                         <td class="px-2 py-3 align-top">
                             <div class="flex flex-col gap-1.5 items-start">
-                                <input type="text" value="${row.lensPower}" onchange="updateField(${originalIndex}, 'lensPower', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition text-center font-bold text-active-700 placeholder-gray-300" placeholder="+21.5">
+                                <!-- 💥 เปลี่ยนเป็น inputmode="decimal" เรียก Numpad 💥 -->
+                                <input type="text" inputmode="decimal" value="${row.lensPower}" onchange="updateField(${originalIndex}, 'lensPower', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition text-center font-bold text-active-700 placeholder-gray-300" placeholder="21.5">
                                 
                                 ${row.showLens2 ? `
                                     <div class="flex items-center gap-1 w-full">
-                                        <input type="text" value="${row.lensPower2}" onchange="updateField(${originalIndex}, 'lensPower2', this.value)" class="w-full bg-orange-50/70 border border-orange-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-center font-bold text-orange-700 placeholder-orange-300" placeholder="+22.0">
+                                        <input type="text" inputmode="decimal" value="${row.lensPower2}" onchange="updateField(${originalIndex}, 'lensPower2', this.value)" class="w-full bg-orange-50/70 border border-orange-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-center font-bold text-orange-700 placeholder-orange-300" placeholder="22.0">
                                         <button onclick="removeLens2(${originalIndex})" class="text-red-400 hover:text-red-600 p-1" title="ลบเลนส์สำรอง">✖️</button>
                                     </div>
                                 ` : `
@@ -676,11 +640,10 @@
                 noResultsMsg.classList.add('hidden');
                 document.getElementById('selectAllCheckbox').disabled = false;
             }
-            
             checkSelectAllStatus(); 
         }
 
-        // 💥 ส่วนจัดการหน้าพิมพ์ V.18 (ลบคอลัมน์วันที่เขียน, ตารางพอดีคำ, ฟอนต์ 9pt) 💥
+        // 💥 ส่วนจัดการหน้าพิมพ์ 💥
         function prepareAndPrint() {
             const patientsToPrint = appData.filter(row => row.selected);
 
@@ -705,26 +668,22 @@
             let uniqueLenses = Array.from(usedLensesSet).filter(Boolean); 
             const lensPriority = { 'XC1': 1, 'Eyhance': 2, 'Avansee': 3, 'Nanex': 4 };
             uniqueLenses.sort((a, b) => (lensPriority[a] || 99) - (lensPriority[b] || 99));
-
             if(uniqueLenses.length === 0) uniqueLenses = ['XC1', 'Eyhance'];
 
-            // 1. หัวตาราง: ลบคอลัมน์ "วันที่เขียน" ออก แล้วขยายความกว้างชื่อคนไข้เป็น 40%
+            // หัวตาราง (ตัดวันที่เขียนออก ขยายช่องชื่อเป็น 40%)
             let theadHtml = `
                 <tr>
                     <th class="w-[40%]">ชื่อผู้ป่วย</th>
                     <th class="w-[15%] text-center">HN</th>
             `;
             uniqueLenses.forEach(lens => {
-                if(lens === 'XC1') {
-                    theadHtml += `<th class="text-center">XC1<br><span class="text-[8pt] font-normal">สปสช</span></th>`;
-                } else {
-                    theadHtml += `<th class="text-center">${lens}</th>`;
-                }
+                if(lens === 'XC1') theadHtml += `<th class="text-center">XC1<br><span class="text-[8pt] font-normal">สปสช</span></th>`;
+                else theadHtml += `<th class="text-center">${lens}</th>`;
             });
             theadHtml += `</tr>`;
             document.getElementById('print-thead').innerHTML = theadHtml;
 
-            // 2. ข้อมูลตาราง: ไม่ต้องดึงวันที่มาใส่แล้ว
+            // ข้อมูลคนไข้
             let printHtml = '';
             patientsToPrint.forEach(row => {
                 printHtml += `
@@ -735,8 +694,20 @@
                 
                 uniqueLenses.forEach(lens => {
                     let powers = [];
-                    if(row.lensType === lens && row.lensPower) powers.push(`+${row.lensPower.replace('+', '')}`);
-                    if(row.showLens2 && row.lensType2 === lens && row.lensPower2) powers.push(`+${row.lensPower2.replace('+', '')}`);
+                    
+                    // 💥 ฟังก์ชันฉลาด เติมเครื่องหมาย + ให้อัตโนมัติถ้าไม่มี
+                    const formatPower = (val) => {
+                        if(!val) return '';
+                        let p = val.trim();
+                        // ถ้าพิมพ์มาเพียวๆ ไม่มี + หรือ - นำหน้า ให้เติม +
+                        if(p && !p.startsWith('+') && !p.startsWith('-')) {
+                            return '+' + p;
+                        }
+                        return p; // ถ้ามี + หรือ - พิมพ์มาอยู่แล้วก็ปล่อยผ่าน
+                    };
+
+                    if(row.lensType === lens && row.lensPower) powers.push(formatPower(row.lensPower));
+                    if(row.showLens2 && row.lensType2 === lens && row.lensPower2) powers.push(formatPower(row.lensPower2));
                     
                     printHtml += `<td class="text-center font-bold py-1">${powers.join('<br>')}</td>`;
                 });
@@ -744,9 +715,7 @@
                 printHtml += `</tr>`;
             });
             
-            // ไม่เติมบรรทัดว่าง ตารางจะได้พอดีเป๊ะ
             document.getElementById('print-tbody').innerHTML = printHtml;
-
             window.print(); 
         }
     </script>
