@@ -47,26 +47,34 @@
         .modal-enter { animation: fadeInScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-        /* ================= สไตล์หน้าพิมพ์ V.17 (ตารางพอดีชื่อ บรรทัดเดียวเป๊ะ) ================= */
+        /* ================= สไตล์หน้าพิมพ์ V.18 (ลดขนาด 9pt ตัดวันที่ออก) ================= */
         @media print {
             body { background: white !important; font-family: 'Sarabun', sans-serif !important; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             @page { margin: 1cm; size: A4 portrait; }
             
-            /* หดฟอนต์เหลือ 11pt และลดกรอบให้ตารางไม่แน่น */
-            .print-table th, .print-table td {
+            /* หัวตารางขนาดเท่าเดิม 11pt */
+            .print-table th {
                 border: 1px solid black !important; 
                 padding: 4px 6px !important; 
                 font-size: 11pt !important; 
                 vertical-align: middle;
                 line-height: 1.2;
-            }
-            .print-table th {
                 background-color: #f3f4f6 !important;
                 -webkit-print-color-adjust: exact;
                 color-adjust: exact;
             }
+            
+            /* เนื้อหาในตารางลดเหลือ 9pt ตามรีเควส */
+            .print-table td {
+                border: 1px solid black !important; 
+                padding: 4px 6px !important; 
+                font-size: 9pt !important; 
+                vertical-align: middle;
+                line-height: 1.2;
+            }
+
             .print-header { font-size: 16pt !important; font-weight: bold; text-align: center; margin-bottom: 12px; }
             .print-subheader { font-size: 11pt !important; margin-bottom: 12px; }
             
@@ -101,7 +109,7 @@
                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-active-400 opacity-75"></span>
                           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-active-500"></span>
                         </span>
-                        ระบบปริ้นท์อัจฉริยะ (คอลัมน์และตารางพอดีคำ!)
+                        อัปเดตตารางปริ้นท์ 9pt ตัดวันที่ออก!
                     </p>
                 </div>
             </div>
@@ -229,10 +237,10 @@
         
         <table class="w-full text-left print-table border-collapse">
             <thead id="print-thead">
-                <!-- หัวตารางจะถูกแทรกด้วย Javascript แบบอัตโนมัติตามเลนส์ที่ใช้จริง -->
+                <!-- หัวตารางจะถูกแทรกด้วย Javascript -->
             </thead>
             <tbody id="print-tbody">
-                <!-- ข้อมูลจะถูกแทรกด้วย Javascript แบบอัตโนมัติตามเลนส์ที่ใช้จริง -->
+                <!-- ข้อมูลจะถูกแทรกด้วย Javascript -->
             </tbody>
         </table>
         
@@ -377,7 +385,6 @@
             document.getElementById('setup-date').value = getTodayString();
             populateFilterDoctorOptions();
             
-            // ใช้ Key เดิมจาก V.16 จะได้ไม่ต้องอัปโหลดใหม่
             const savedData = localStorage.getItem('iol_clinic_data_v16'); 
             if (savedData) { appData = JSON.parse(savedData); renderTable(); } 
             else { showEmptyState(); }
@@ -673,7 +680,7 @@
             checkSelectAllStatus(); 
         }
 
-        // 💥 เอาโค้ดเสกบรรทัดว่างออกแล้ว! 💥
+        // 💥 ส่วนจัดการหน้าพิมพ์ V.18 (ลบคอลัมน์วันที่เขียน, ตารางพอดีคำ, ฟอนต์ 9pt) 💥
         function prepareAndPrint() {
             const patientsToPrint = appData.filter(row => row.selected);
 
@@ -701,11 +708,11 @@
 
             if(uniqueLenses.length === 0) uniqueLenses = ['XC1', 'Eyhance'];
 
+            // 1. หัวตาราง: ลบคอลัมน์ "วันที่เขียน" ออก แล้วขยายความกว้างชื่อคนไข้เป็น 40%
             let theadHtml = `
                 <tr>
-                    <th class="w-[12%] text-center">วันที่เขียน</th>
-                    <th class="w-[35%]">ชื่อผู้ป่วย</th>
-                    <th class="w-[12%] text-center">HN</th>
+                    <th class="w-[40%]">ชื่อผู้ป่วย</th>
+                    <th class="w-[15%] text-center">HN</th>
             `;
             uniqueLenses.forEach(lens => {
                 if(lens === 'XC1') {
@@ -717,13 +724,11 @@
             theadHtml += `</tr>`;
             document.getElementById('print-thead').innerHTML = theadHtml;
 
+            // 2. ข้อมูลตาราง: ไม่ต้องดึงวันที่มาใส่แล้ว
             let printHtml = '';
             patientsToPrint.forEach(row => {
-                let formattedOpDate = convertToThaiDateShort(row.opDate);
-
                 printHtml += `
                     <tr>
-                        <td class="text-center">${formattedOpDate}</td>
                         <td class="nowrap-name">${row.name}</td>
                         <td class="text-center">${row.hn}</td>
                 `;
@@ -739,8 +744,7 @@
                 printHtml += `</tr>`;
             });
             
-            // 🔥 ลบโค้ดเติมบรรทัดว่างตรงนี้ออกไปแล้ว 🔥
-
+            // ไม่เติมบรรทัดว่าง ตารางจะได้พอดีเป๊ะ
             document.getElementById('print-tbody').innerHTML = printHtml;
 
             window.print(); 
