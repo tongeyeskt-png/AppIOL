@@ -47,15 +47,28 @@
         .modal-enter { animation: fadeInScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
+        /* ================= สไตล์สำหรับหน้าพิมพ์กระดาษ (ปรับปรุงใหม่!) ================= */
         @media print {
             body { background: white !important; font-family: 'Sarabun', sans-serif !important; }
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             @page { margin: 1cm; size: A4 portrait; }
+            
+            /* ลดฟอนต์ลงเหลือ 12pt และปรับ padding ให้ตารางดูกระชับสวยงาม */
             .print-table th, .print-table td {
-                border: 1px solid black !important; padding: 6px 8px !important; font-size: 14pt !important;
+                border: 1px solid black !important; 
+                padding: 4px 6px !important; 
+                font-size: 12pt !important; 
+                vertical-align: middle;
             }
-            .print-header { font-size: 18pt !important; font-weight: bold; text-align: center; margin-bottom: 20px; }
+            /* ทำหัวตารางให้เป็นสีเทาอ่อนนิดๆ จะได้ดูง่ายขึ้น */
+            .print-table th {
+                background-color: #f3f4f6 !important;
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+            }
+            .print-header { font-size: 16pt !important; font-weight: bold; text-align: center; margin-bottom: 15px; }
+            .print-subheader { font-size: 12pt !important; margin-bottom: 15px; }
         }
         .print-only { display: none; font-family: 'Sarabun', sans-serif; }
     </style>
@@ -85,7 +98,7 @@
                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-active-400 opacity-75"></span>
                           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-active-500"></span>
                         </span>
-                        ระบบกรองหมอยืดหยุ่น V.14 (จิ้มแล้วเจอชัวร์!)
+                        อัปเดตหน้าพิมพ์ให้สวยเป๊ะ V.15
                     </p>
                 </div>
             </div>
@@ -204,29 +217,31 @@
         </div>
     </div>
 
-    <!-- ================= ส่วนหน้าจอพิมพ์ ================= -->
+    <!-- ================= ส่วนหน้าจอพิมพ์ (ปรับปรุงตารางใหม่!) ================= -->
     <div class="print-only">
         <div class="print-header">ใบเบิกเลนส์แก้วตาเทียมห้องผ่าตัดตา</div>
-        <div class="flex justify-between items-center mb-6 text-lg">
+        <div class="flex justify-between items-center print-subheader">
             <div><b>แพทย์</b> <span id="print-doctor-name" class="ml-2">........................................</span></div>
             <div><b>วันที่ผ่าตัด</b> <span id="print-op-date" class="ml-2">........................................</span></div>
         </div>
         <table class="w-full text-left print-table border-collapse">
             <thead>
                 <tr>
-                    <th class="w-24 text-center">วันที่เขียน</th>
-                    <th>ชื่อผู้ป่วย</th>
-                    <th class="w-24 text-center">HN</th>
-                    <th class="w-24 text-center">XC1<br><span class="text-sm font-normal">สปสช</span></th>
-                    <th class="w-24 text-center">Eyhance</th>
-                    <th class="w-24 text-center">Avansee</th>
+                    <th class="w-[12%] text-center">วันที่เขียน</th>
+                    <th class="w-[28%]">ชื่อผู้ป่วย</th>
+                    <th class="w-[12%] text-center">HN</th>
+                    <th class="w-[12%] text-center">XC1<br><span class="text-[10pt] font-normal">สปสช</span></th>
+                    <th class="w-[12%] text-center">Eyhance</th>
+                    <th class="w-[12%] text-center">Avansee</th>
+                    <th class="w-[12%] text-center">Nanex</th>
+                    <th class="text-center w-auto">อื่นๆ</th>
                 </tr>
             </thead>
             <tbody id="print-tbody"></tbody>
         </table>
-        <div class="mt-12 flex justify-end">
+        <div class="mt-8 flex justify-end">
             <div class="text-center">
-                <p class="mb-8">ผู้เบิก ................................................................</p>
+                <p class="mb-6">ผู้เบิก ................................................................</p>
                 <p>(................................................................)</p>
             </div>
         </div>
@@ -365,9 +380,7 @@
             document.getElementById('setup-date').value = getTodayString();
             populateFilterDoctorOptions();
             
-            // V.14 (อัปเดตระบบค้นหาให้หาหมอเจอ) 
-            // เปลี่ยน key ใหม่จะได้เริ่มสดชื่น หรือถ้าต้องอยากใช้ข้อมูลเดิมก็โหลดใหม่รอบนึงน้า
-            const savedData = localStorage.getItem('iol_clinic_data_v14'); 
+            const savedData = localStorage.getItem('iol_clinic_data_v14'); // ใช้ v14 ต่อได้เลย
             if (savedData) { appData = JSON.parse(savedData); renderTable(); } 
             else { showEmptyState(); }
         };
@@ -464,9 +477,7 @@
                                   row.hn.toLowerCase().includes(filterSearch) ||
                                   (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
                 
-                // 💥 แก้ไขจุดที่บั๊ก: เปลี่ยนจากการเช็คเป๊ะๆ เป็นการเช็คแบบมีส่วนประกอบ (Includes)
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
-                
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 
                 if(matchSearch && matchDoc && matchDate) {
@@ -496,10 +507,7 @@
                                   row.name.toLowerCase().includes(filterSearch) || 
                                   row.hn.toLowerCase().includes(filterSearch) ||
                                   (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
-                
-                // 💥 แก้มจุดที่บั๊กเช่นกัน
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
-                
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 return matchSearch && matchDoc && matchDate;
             });
@@ -558,10 +566,7 @@
                                   row.name.toLowerCase().includes(filterSearch) || 
                                   row.hn.toLowerCase().includes(filterSearch) ||
                                   (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
-                
-                // 💥 เปลี่ยนการกรองดรอปดาวน์ให้ฉลาดขึ้น ตรงนี้แหละตัวการ!
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
-                
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 return matchSearch && matchDoc && matchDate;
             });
@@ -670,6 +675,7 @@
             checkSelectAllStatus(); 
         }
 
+        // 💥 ส่วนที่ปรับปรุงใหม่สำหรับการจัดหน้าพิมพ์ 💥
         function prepareAndPrint() {
             const patientsToPrint = appData.filter(row => row.selected);
 
@@ -688,17 +694,19 @@
             let printHtml = '';
             
             patientsToPrint.forEach(row => {
-                let xc1 = [], eyhance = [], avansee = [];
+                // เพิ่ม array ของ nanex และ others มารองรับ
+                let xc1 = [], eyhance = [], avansee = [], nanex = [], others = [];
 
                 const processLensForPrint = (type, power) => {
                     if(!type) return;
                     let p = power ? `+${power.replace('+', '')}` : '';
+                    
+                    // จัดเลนส์ลงคอลัมน์ให้ตรงเป๊ะ
                     if(type === 'XC1') xc1.push(p);
                     else if(type === 'Eyhance') eyhance.push(p);
-                    else {
-                        if(type === 'Avansee') avansee.push(p);
-                        else avansee.push(`<span class="text-xs text-gray-500 font-normal">${type}</span> ${p}`);
-                    }
+                    else if(type === 'Avansee') avansee.push(p);
+                    else if(type === 'Nanex') nanex.push(p); // Nanex มีคอลัมน์ของตัวเองแล้ว!
+                    else others.push(`<span class="text-[10pt] text-gray-600 font-normal">${type}</span> ${p}`); // ถ้ามียี่ห้ออื่นนอกเหนือจากนี้ ให้ไปตกช่องสุดท้าย
                 };
 
                 processLensForPrint(row.lensType, row.lensPower);
@@ -711,16 +719,19 @@
                         <td class="text-center">${formattedOpDate}</td>
                         <td>${row.name}</td>
                         <td class="text-center">${row.hn}</td>
-                        <td class="text-center font-bold leading-tight py-2">${xc1.join('<br>')}</td>
-                        <td class="text-center font-bold leading-tight py-2">${eyhance.join('<br>')}</td>
-                        <td class="text-center font-bold leading-tight py-2">${avansee.join('<br>')}</td>
+                        <td class="text-center font-bold py-1">${xc1.join('<br>')}</td>
+                        <td class="text-center font-bold py-1">${eyhance.join('<br>')}</td>
+                        <td class="text-center font-bold py-1">${avansee.join('<br>')}</td>
+                        <td class="text-center font-bold py-1">${nanex.join('<br>')}</td>
+                        <td class="text-center font-bold py-1">${others.join('<br>')}</td>
                     </tr>
                 `;
             });
             
+            // ปรับตัวเลขเติมบรรทัดว่างให้ตรงกับจำนวนคอลัมน์ที่เพิ่มขึ้น (8 คอลัมน์)
             const emptyRowsCount = Math.max(0, 15 - patientsToPrint.length);
             for(let i=0; i<emptyRowsCount; i++) {
-                printHtml += `<tr><td class="h-8"></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+                printHtml += `<tr><td class="h-7"></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
             }
 
             document.getElementById('print-tbody').innerHTML = printHtml;
