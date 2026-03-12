@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบใบเบิกเลนส์ตาเทียม (IOL) - Pro Edition</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -44,10 +44,10 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: #c7c7cc; border-radius: 10px; }
         
-        .modal-enter { animation: fadeInScale 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        .modal-enter { animation: fadeInScale 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
         @keyframes fadeInScale { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
 
-        /* ================= สไตล์หน้าพิมพ์ V.18-19 (ลดขนาด 9pt ตัดวันที่ออก) ================= */
+        /* ================= สไตล์หน้าพิมพ์ V.18 (ลดขนาด 9pt ตัดวันที่ออก) ================= */
         @media print {
             body { background: white !important; font-family: 'Sarabun', sans-serif !important; }
             .no-print { display: none !important; }
@@ -106,7 +106,7 @@
                           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-active-400 opacity-75"></span>
                           <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-active-500"></span>
                         </span>
-                        อัปเดตแป้นพิมพ์ตัวเลข (Numpad) พิมพ์ไวขึ้น!
+                        อัปเดตแป้นตัวเลข Numpad ของแท้! (V.20)
                     </p>
                 </div>
             </div>
@@ -289,6 +289,49 @@
         </div>
     </div>
 
+    <!-- ================= 💥 CUSTOM NUMPAD MODAL (แป้นสี่เหลี่ยมของแท้!) 💥 ================= -->
+    <div id="custom-numpad-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden flex items-center justify-center no-print">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-[320px] mx-4 border border-gray-100 overflow-hidden modal-enter flex flex-col">
+            <!-- จอแสดงผลตัวเลข -->
+            <div class="bg-slate-800 p-6 text-right">
+                <p class="text-slate-400 text-xs font-medium mb-1 uppercase tracking-widest">เบอร์เลนส์ (ไม่ต้องใส่ +)</p>
+                <div id="numpad-display" class="text-4xl font-bold text-white tracking-wider h-10 flex items-center justify-end overflow-hidden">
+                    21.5
+                </div>
+            </div>
+            
+            <!-- แป้นกด -->
+            <div class="p-3 bg-gray-100 grid grid-cols-3 gap-2">
+                <button onclick="numpadPress('7')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">7</button>
+                <button onclick="numpadPress('8')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">8</button>
+                <button onclick="numpadPress('9')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">9</button>
+                
+                <button onclick="numpadPress('4')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">4</button>
+                <button onclick="numpadPress('5')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">5</button>
+                <button onclick="numpadPress('6')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">6</button>
+                
+                <button onclick="numpadPress('1')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">1</button>
+                <button onclick="numpadPress('2')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">2</button>
+                <button onclick="numpadPress('3')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">3</button>
+                
+                <button onclick="numpadPress('.')" class="bg-white hover:bg-gray-50 text-gray-800 text-3xl font-bold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">.</button>
+                <button onclick="numpadPress('0')" class="bg-white hover:bg-gray-50 text-gray-800 text-2xl font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">0</button>
+                <button onclick="numpadPress('back')" class="bg-red-100 hover:bg-red-200 text-red-600 text-xl font-bold py-4 rounded-xl shadow-sm active:scale-95 transition-transform flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
+                </button>
+                
+                <!-- ปุ่มล้างข้อมูล และ ตกลง -->
+                <button onclick="numpadPress('clear')" class="col-span-1 bg-gray-200 hover:bg-gray-300 text-gray-700 text-base font-semibold py-4 rounded-xl shadow-sm active:scale-95 transition-transform">ล้าง (C)</button>
+                <button onclick="closeNumpad(true)" class="col-span-2 bg-active-500 hover:bg-active-600 text-white text-lg font-bold py-4 rounded-xl shadow-md active:scale-95 transition-transform">ตกลง (OK)</button>
+            </div>
+            
+            <button onclick="closeNumpad(false)" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+    </div>
+
+
     <!-- ================= Javascript ================= -->
     <script>
         let appData = [];
@@ -298,10 +341,54 @@
         let doctorList = JSON.parse(localStorage.getItem('iol_clinic_doctors')) || defaultDoctors;
         let lensList = JSON.parse(localStorage.getItem('iol_clinic_lenses')) || defaultLenses;
 
+        // 💥 ตัวแปรสำหรับระบบ Numpad 💥
+        let currentNumpadTarget = null; // เก็บว่ากำลังพิมพ์ของคนไหน ช่องไหน
+        let currentNumpadValue = "";
+
+        // ฟังก์ชันเปิด Numpad
+        function openNumpad(index, field, currentValue) {
+            currentNumpadTarget = { index, field };
+            // เอาเครื่องหมาย + ออกตอนพิมพ์ จะได้พิมพ์ง่ายๆ
+            currentNumpadValue = (currentValue || "").replace('+', ''); 
+            document.getElementById('numpad-display').innerText = currentNumpadValue || "0";
+            document.getElementById('custom-numpad-modal').classList.remove('hidden');
+        }
+
+        // ฟังก์ชันกดปุ่มใน Numpad
+        function numpadPress(val) {
+            if(val === 'back') {
+                currentNumpadValue = currentNumpadValue.slice(0, -1);
+            } else if (val === 'clear') {
+                currentNumpadValue = "";
+            } else {
+                if(val === '.' && currentNumpadValue.includes('.')) return; // กันใส่จุดซ้ำ
+                if(currentNumpadValue === "0" && val !== '.') currentNumpadValue = val; // ถ้าเป็น 0 อยู่แล้วพิมพ์เลขอื่น ให้ทับไปเลย
+                else currentNumpadValue += val;
+            }
+            document.getElementById('numpad-display').innerText = currentNumpadValue || "0";
+        }
+
+        // ฟังก์ชันปิด Numpad และเซฟข้อมูล
+        function closeNumpad(saveData) {
+            if(saveData && currentNumpadTarget) {
+                // 💥 ฟีเจอร์ฉลาด: เติม + ให้อัตโนมัติถ้าเซฟ
+                let finalVal = currentNumpadValue;
+                if(finalVal && !finalVal.startsWith('-') && !finalVal.startsWith('+')) {
+                    finalVal = '+' + finalVal;
+                }
+                updateField(currentNumpadTarget.index, currentNumpadTarget.field, finalVal);
+            }
+            document.getElementById('custom-numpad-modal').classList.add('hidden');
+            currentNumpadTarget = null;
+        }
+
+
         function saveSettings() {
             localStorage.setItem('iol_clinic_doctors', JSON.stringify(doctorList));
             localStorage.setItem('iol_clinic_lenses', JSON.stringify(lensList));
-            renderSettings(); populateFilterDoctorOptions(); renderTable();    
+            renderSettings(); 
+            populateFilterDoctorOptions(); 
+            renderTable();    
         }
         function addDoctor() {
             const input = document.getElementById('new-doctor-input');
@@ -344,17 +431,17 @@
             const d = new Date(isoDate); d.setDate(d.getDate() + 1);
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         }
-        function convertToThaiDateFull(iso) {
-            if(!iso) return '........................................';
-            const p = iso.split('-'); if(p.length !== 3) return iso;
-            const m = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-            return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${parseInt(p[0]) + 543}`;
-        }
         function convertToThaiDateShort(iso) {
             if(!iso) return '';
             const p = iso.split('-'); if(p.length !== 3) return iso;
             const m = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
             return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${String(parseInt(p[0]) + 543).slice(-2)}`;
+        }
+        function convertToThaiDateFull(iso) {
+            if(!iso) return '........................................';
+            const p = iso.split('-'); if(p.length !== 3) return iso;
+            const m = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+            return `${parseInt(p[2])} ${m[parseInt(p[1]) - 1]} ${parseInt(p[0]) + 543}`;
         }
         function parseExcelDateToISO(exDate) {
             if (!exDate) return '';
@@ -369,7 +456,9 @@
             const filterDocSelect = document.getElementById('filter-doctor');
             const currentVal = filterDocSelect.value;
             let options = `<option value="">👨‍⚕️ ทุกแพทย์ (ไม่กรอง)</option>`;
-            doctorList.forEach(doc => { options += `<option value="${doc}">${doc}</option>`; });
+            doctorList.forEach(doc => {
+                options += `<option value="${doc}">${doc}</option>`;
+            });
             filterDocSelect.innerHTML = options;
             filterDocSelect.value = currentVal;
         }
@@ -377,7 +466,8 @@
         window.onload = function() {
             document.getElementById('setup-date').value = getTodayString();
             populateFilterDoctorOptions();
-            const savedData = localStorage.getItem('iol_clinic_data_v16'); // ดึงของเก่า V.16 มาใช้ได้เลย
+            
+            const savedData = localStorage.getItem('iol_clinic_data_v16'); 
             if (savedData) { appData = JSON.parse(savedData); renderTable(); } 
             else { showEmptyState(); }
         };
@@ -391,7 +481,8 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const rawExcelData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
                 
-                let addedCount = 0; let skipCount = 0;
+                let addedCount = 0;
+                let skipCount = 0;
 
                 rawExcelData.forEach(row => {
                     let nextDateRaw = row['วันที่นัดถัดไป'] || row['วันนัดถัดไป'] || row['วันนัด'] || '';
@@ -421,22 +512,28 @@
                         if (matchedDoc) cleanDoctor = matchedDoc;
                     }
 
+                    let autoOpDate = getNextDayString(cleanNextDateISO) || getTodayString();
+
                     appData.push({
                         selected: false,
                         nextDate: cleanNextDateISO,
                         name: patientName,
                         hn: rawHN,
                         doctor: cleanDoctor,
-                        opDate: getNextDayString(cleanNextDateISO) || getTodayString(), 
+                        opDate: autoOpDate, 
                         lensType: '', lensPower: '',
-                        showLens2: false, lensType2: '', lensPower2: '',
+                        showLens2: false, 
+                        lensType2: '', lensPower2: '',
                         status: ''
                     });
                     addedCount++;
                 });
 
-                saveData(); clearFilters(false); renderTable(); 
+                saveData(); 
+                clearFilters(false);
+                renderTable(); 
                 document.getElementById('excel-file').value = ''; 
+                
                 alert(`โหลดข้อมูลเสร็จสิ้น! \nเพิ่มรายชื่อใหม่: ${addedCount} คน\nข้ามรายชื่อซ้ำ: ${skipCount} คน`);
             };
             reader.readAsArrayBuffer(file);
@@ -462,10 +559,17 @@
             const filterDate = document.getElementById('filter-date').value;
 
             appData.forEach((row) => {
-                let matchSearch = filterSearch === '' || row.name.toLowerCase().includes(filterSearch) || row.hn.toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
+                let matchSearch = filterSearch === '' || 
+                                  row.name.toLowerCase().includes(filterSearch) || 
+                                  row.hn.toLowerCase().includes(filterSearch) ||
+                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
+                
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
-                if(matchSearch && matchDoc && matchDate) row.selected = isChecked;
+                
+                if(matchSearch && matchDoc && matchDate) {
+                    row.selected = isChecked;
+                }
             });
             saveData(); renderTable(); updateHeaderSetup();
         }
@@ -486,14 +590,20 @@
             const filterDate = document.getElementById('filter-date').value;
 
             const visibleRows = appData.filter(row => {
-                let matchSearch = filterSearch === '' || row.name.toLowerCase().includes(filterSearch) || row.hn.toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
+                let matchSearch = filterSearch === '' || 
+                                  row.name.toLowerCase().includes(filterSearch) || 
+                                  row.hn.toLowerCase().includes(filterSearch) ||
+                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 return matchSearch && matchDoc && matchDate;
             });
 
-            if(visibleRows.length === 0) selectAllBox.checked = false;
-            else selectAllBox.checked = visibleRows.every(row => row.selected);
+            if(visibleRows.length === 0) {
+                selectAllBox.checked = false;
+            } else {
+                selectAllBox.checked = visibleRows.every(row => row.selected);
+            }
         }
 
         function updateHeaderSetup() {
@@ -527,6 +637,7 @@
 
         function renderTable() {
             if (appData.length === 0) { showEmptyState(); return; }
+            
             document.getElementById('print-setup').classList.remove('hidden');
             document.getElementById('filter-bar').classList.remove('hidden');
             
@@ -538,7 +649,10 @@
             const filterDate = document.getElementById('filter-date').value;
 
             const filteredData = appData.map((row, index) => ({ ...row, originalIndex: index })).filter(row => {
-                let matchSearch = filterSearch === '' || row.name.toLowerCase().includes(filterSearch) || row.hn.toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
+                let matchSearch = filterSearch === '' || 
+                                  row.name.toLowerCase().includes(filterSearch) || 
+                                  row.hn.toLowerCase().includes(filterSearch) ||
+                                  (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
                 return matchSearch && matchDoc && matchDate;
@@ -551,8 +665,13 @@
                 const rowClass = row.selected ? 'bg-indigo-50/70 hover:bg-indigo-100/70 transition duration-150' : 'bg-transparent hover:bg-gray-50/80 transition duration-150';
 
                 let doctorOptions = `<option value="">- เลือกแพทย์ -</option>`;
-                doctorList.forEach(docName => { doctorOptions += `<option value="${docName}" ${row.doctor === docName ? 'selected' : ''}>${docName}</option>`; });
-                if (row.doctor && !doctorList.includes(row.doctor)) doctorOptions += `<option value="${row.doctor}" selected>${row.doctor}</option>`;
+                doctorList.forEach(docName => {
+                    const isSelected = (row.doctor === docName) ? 'selected' : '';
+                    doctorOptions += `<option value="${docName}" ${isSelected}>${docName}</option>`;
+                });
+                if (row.doctor && !doctorList.includes(row.doctor)) {
+                    doctorOptions += `<option value="${row.doctor}" selected>${row.doctor}</option>`;
+                }
 
                 let lensOptions1 = `<option value="">- เลือกรุ่น -</option>`;
                 let lensOptions2 = `<option value="">- เลือกรุ่น (สำรอง) -</option>`;
@@ -599,17 +718,17 @@
                         </td>
 
                         <td class="px-2 py-3 align-top">
-                            <div class="flex flex-col gap-1.5 items-start">
-                                <!-- 💥 เปลี่ยนเป็น inputmode="decimal" เรียก Numpad 💥 -->
-                                <input type="text" inputmode="decimal" value="${row.lensPower}" onchange="updateField(${originalIndex}, 'lensPower', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition text-center font-bold text-active-700 placeholder-gray-300" placeholder="21.5">
+                            <div class="flex flex-col gap-1.5 items-start w-[90px]">
+                                <!-- 💥 เปลี่ยนให้เป็นแบบ Readonly และให้เปิด Numpad แทน 💥 -->
+                                <input type="text" readonly value="${row.lensPower}" onclick="openNumpad(${originalIndex}, 'lensPower', this.value)" class="w-full bg-white/50 border border-gray-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-active-400 outline-none transition text-center font-bold text-active-700 placeholder-gray-300 cursor-pointer shadow-sm hover:bg-white" placeholder="21.5">
                                 
                                 ${row.showLens2 ? `
-                                    <div class="flex items-center gap-1 w-full">
-                                        <input type="text" inputmode="decimal" value="${row.lensPower2}" onchange="updateField(${originalIndex}, 'lensPower2', this.value)" class="w-full bg-orange-50/70 border border-orange-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-center font-bold text-orange-700 placeholder-orange-300" placeholder="22.0">
-                                        <button onclick="removeLens2(${originalIndex})" class="text-red-400 hover:text-red-600 p-1" title="ลบเลนส์สำรอง">✖️</button>
+                                    <div class="flex items-center gap-1 w-full relative group/btn">
+                                        <input type="text" readonly value="${row.lensPower2}" onclick="openNumpad(${originalIndex}, 'lensPower2', this.value)" class="w-full bg-orange-50/70 border border-orange-200 rounded-lg px-2 py-2 focus:bg-white focus:ring-2 focus:ring-orange-400 outline-none transition text-center font-bold text-orange-700 placeholder-orange-300 cursor-pointer shadow-sm hover:bg-orange-50" placeholder="22.0">
+                                        <button onclick="removeLens2(${originalIndex})" class="absolute -right-6 text-red-400 hover:text-red-600 p-1 opacity-0 group-hover/btn:opacity-100 transition-opacity" title="ลบเลนส์สำรอง">✖️</button>
                                     </div>
                                 ` : `
-                                    <button onclick="updateField(${originalIndex}, 'showLens2', true); renderTable();" class="text-[12px] text-active-600 hover:text-active-800 font-medium bg-active-50 hover:bg-active-100 px-2 py-1.5 rounded-lg w-full border border-active-100 transition shadow-sm">+ เลนส์สำรอง</button>
+                                    <button onclick="updateField(${originalIndex}, 'showLens2', true); renderTable();" class="text-[12px] text-active-600 hover:text-active-800 font-medium bg-active-50 hover:bg-active-100 px-2 py-1.5 rounded-lg w-full border border-active-100 transition shadow-sm">+ สำรอง</button>
                                 `}
                             </div>
                         </td>
@@ -640,6 +759,7 @@
                 noResultsMsg.classList.add('hidden');
                 document.getElementById('selectAllCheckbox').disabled = false;
             }
+            
             checkSelectAllStatus(); 
         }
 
@@ -668,22 +788,24 @@
             let uniqueLenses = Array.from(usedLensesSet).filter(Boolean); 
             const lensPriority = { 'XC1': 1, 'Eyhance': 2, 'Avansee': 3, 'Nanex': 4 };
             uniqueLenses.sort((a, b) => (lensPriority[a] || 99) - (lensPriority[b] || 99));
+
             if(uniqueLenses.length === 0) uniqueLenses = ['XC1', 'Eyhance'];
 
-            // หัวตาราง (ตัดวันที่เขียนออก ขยายช่องชื่อเป็น 40%)
             let theadHtml = `
                 <tr>
                     <th class="w-[40%]">ชื่อผู้ป่วย</th>
                     <th class="w-[15%] text-center">HN</th>
             `;
             uniqueLenses.forEach(lens => {
-                if(lens === 'XC1') theadHtml += `<th class="text-center">XC1<br><span class="text-[8pt] font-normal">สปสช</span></th>`;
-                else theadHtml += `<th class="text-center">${lens}</th>`;
+                if(lens === 'XC1') {
+                    theadHtml += `<th class="text-center">XC1<br><span class="text-[8pt] font-normal">สปสช</span></th>`;
+                } else {
+                    theadHtml += `<th class="text-center">${lens}</th>`;
+                }
             });
             theadHtml += `</tr>`;
             document.getElementById('print-thead').innerHTML = theadHtml;
 
-            // ข้อมูลคนไข้
             let printHtml = '';
             patientsToPrint.forEach(row => {
                 printHtml += `
@@ -694,20 +816,9 @@
                 
                 uniqueLenses.forEach(lens => {
                     let powers = [];
-                    
-                    // 💥 ฟังก์ชันฉลาด เติมเครื่องหมาย + ให้อัตโนมัติถ้าไม่มี
-                    const formatPower = (val) => {
-                        if(!val) return '';
-                        let p = val.trim();
-                        // ถ้าพิมพ์มาเพียวๆ ไม่มี + หรือ - นำหน้า ให้เติม +
-                        if(p && !p.startsWith('+') && !p.startsWith('-')) {
-                            return '+' + p;
-                        }
-                        return p; // ถ้ามี + หรือ - พิมพ์มาอยู่แล้วก็ปล่อยผ่าน
-                    };
-
-                    if(row.lensType === lens && row.lensPower) powers.push(formatPower(row.lensPower));
-                    if(row.showLens2 && row.lensType2 === lens && row.lensPower2) powers.push(formatPower(row.lensPower2));
+                    // ดึงเบอร์มาโชว์ (บวก ถูกเติมตอนเซฟจาก Numpad แล้ว)
+                    if(row.lensType === lens && row.lensPower) powers.push(row.lensPower);
+                    if(row.showLens2 && row.lensType2 === lens && row.lensPower2) powers.push(row.lensPower2);
                     
                     printHtml += `<td class="text-center font-bold py-1">${powers.join('<br>')}</td>`;
                 });
@@ -716,6 +827,7 @@
             });
             
             document.getElementById('print-tbody').innerHTML = printHtml;
+
             window.print(); 
         }
     </script>
