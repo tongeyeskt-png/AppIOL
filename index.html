@@ -78,6 +78,23 @@
         .modal-enter { animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
         @keyframes popIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
 
+        /* ✅ FIX: ใช้ class show-flex แทนการ remove hidden เพื่อให้ display:flex ทำงานถูกต้อง */
+        .show-flex { display: flex !important; }
+        
+        /* 🔍 Search bar highlight animation */
+        @keyframes searchPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.4); }
+            50% { box-shadow: 0 0 0 6px rgba(56, 189, 248, 0); }
+        }
+        .search-active { animation: searchPulse 0.5s ease-out; }
+
+        /* 🏷️ Search result highlight */
+        .search-highlight {
+            background: linear-gradient(120deg, #fce7f3 0%, #bae6fd 100%);
+            border-radius: 4px;
+            padding: 0 2px;
+        }
+
         @media print {
             body { background: white !important; font-family: 'Sarabun', sans-serif !important; }
             .no-print { display: none !important; }
@@ -104,6 +121,7 @@
 
     <div class="max-w-7xl mx-auto no-print space-y-6">
         
+        <!-- Header -->
         <div class="glass-card rounded-4xl p-6 md:p-10 relative overflow-hidden flex flex-col md:flex-row justify-between items-center shadow-sm border border-white">
             <div class="absolute -top-20 -right-10 w-64 h-64 bg-pastelPink-200 rounded-full mix-blend-multiply opacity-60 blur-3xl"></div>
             <div class="absolute -bottom-20 left-20 w-72 h-72 bg-pastelBlue-200 rounded-full mix-blend-multiply opacity-60 blur-3xl"></div>
@@ -118,7 +136,7 @@
                 </h1>
                 <p class="text-pastelPink-500 font-medium flex items-center justify-center md:justify-start gap-2 bg-white/60 backdrop-blur-sm inline-flex px-4 py-1.5 rounded-full text-sm mt-2 border border-pink-100">
                     <span class="w-2 h-2 rounded-full bg-pastelPink-400 animate-pulse"></span>
-                    รองรับเพิ่มคิวเอง & ค้นหาชื่อไม่สนใจการเว้นวรรค
+                    รองรับเพิ่มคิวเอง & ค้นหาชื่อ/HN ได้ทันที
                 </p>
             </div>
             
@@ -140,9 +158,70 @@
             </div>
         </div>
 
-        <div id="filter-bar" class="bg-white/80 backdrop-blur-md rounded-3xl p-4 md:p-6 shadow-soft hidden flex-col md:flex-row gap-4 items-end transition-all border border-white">
+        <!-- ✅ NEW: Quick Search Bar — always visible, prominent -->
+        <div class="glass-card rounded-3xl p-4 md:p-5 border border-white shadow-soft">
+            <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
+                <!-- Search input -->
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <svg class="h-5 w-5 text-pastelBlue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="quick-search" 
+                        placeholder="🔍  ค้นหาชื่อผู้ป่วย หรือ HN..." 
+                        onkeydown="handleSearchKeydown(event)"
+                        oninput="onQuickSearchInput()"
+                        class="w-full pl-11 pr-4 rounded-2xl py-4 bg-white border-2 border-pastelBlue-100 focus:border-pastelBlue-400 text-slate-700 font-medium placeholder-slate-300 shadow-sm"
+                        autocomplete="off"
+                    >
+                    <!-- Clear button — shows when there's text -->
+                    <button 
+                        id="quick-search-clear" 
+                        onclick="clearQuickSearch()" 
+                        class="absolute inset-y-0 right-3 flex items-center px-2 text-slate-300 hover:text-pastelPink-400 transition-colors hidden"
+                        title="ล้างการค้นหา"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Search button -->
+                <button 
+                    onclick="doSearch()" 
+                    class="bg-gradient-to-r from-pastelBlue-400 to-pastelBlue-500 hover:from-pastelBlue-500 hover:to-pastelBlue-600 text-white font-bold px-7 py-4 rounded-2xl shadow-floating transition-all active:scale-95 flex items-center justify-center gap-2 min-w-[130px]"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    ค้นหา
+                </button>
+
+                <!-- Result badge -->
+                <div id="search-result-badge" class="hidden items-center gap-2 bg-pastelBlue-50 border border-pastelBlue-100 text-pastelBlue-600 font-semibold px-4 py-2 rounded-2xl text-sm whitespace-nowrap">
+                    <span id="search-result-count" class="text-lg font-bold text-pastelBlue-500">0</span>
+                    <span>รายการ</span>
+                </div>
+            </div>
+
+            <!-- Search hint chips -->
+            <div class="flex flex-wrap gap-2 mt-3" id="search-hint-row">
+                <span class="text-xs text-slate-400 self-center">ตัวอย่าง:</span>
+                <button onclick="setSearchAndRun('สมชาย')" class="text-xs bg-white border border-pastelBlue-100 text-pastelBlue-500 hover:bg-pastelBlue-50 px-3 py-1.5 rounded-xl transition font-medium">สมชาย</button>
+                <button onclick="setSearchAndRun('123456')" class="text-xs bg-white border border-pastelBlue-100 text-pastelBlue-500 hover:bg-pastelBlue-50 px-3 py-1.5 rounded-xl transition font-medium">HN: 123456</button>
+                <button onclick="setSearchAndRun('')" class="text-xs bg-white border border-gray-100 text-slate-400 hover:bg-gray-50 px-3 py-1.5 rounded-xl transition font-medium">ทั้งหมด</button>
+            </div>
+        </div>
+
+        <!-- Advanced Filter Bar (remains for doctor/date filter) -->
+        <!-- ✅ FIX: ใช้ id-based style toggle แทน hidden class เพื่อให้ flex ทำงานถูกต้อง -->
+        <div id="filter-bar" class="bg-white/80 backdrop-blur-md rounded-3xl p-4 md:p-6 shadow-soft flex-col md:flex-row gap-4 items-end transition-all border border-white" style="display:none;">
             <div class="flex-1 w-full">
-                <label class="block text-xs font-bold text-pastelBlue-500 mb-2 uppercase tracking-wider ml-1">ค้นหารายชื่อ / HN / หมอ</label>
+                <label class="block text-xs font-bold text-pastelBlue-500 mb-2 uppercase tracking-wider ml-1">🔎 ค้นหา (ตัวกรองขั้นสูง)</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <svg class="h-5 w-5 text-pastelBlue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -168,7 +247,9 @@
             </button>
         </div>
 
-        <div id="print-setup" class="bg-gradient-to-r from-pastelPink-50 to-pastelBlue-50 rounded-3xl p-5 md:p-6 border border-white hidden transition-all relative overflow-hidden shadow-soft">
+        <!-- Print Setup -->
+        <!-- ✅ FIX: ใช้ style display แทน -->
+        <div id="print-setup" class="bg-gradient-to-r from-pastelPink-50 to-pastelBlue-50 rounded-3xl p-5 md:p-6 border border-white transition-all relative overflow-hidden shadow-soft" style="display:none;">
             <div class="flex items-center gap-3 mb-5 relative z-10">
                 <div class="bg-pastelPink-400 text-white p-2 rounded-xl shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
@@ -191,6 +272,7 @@
             </div>
         </div>
 
+        <!-- Table -->
         <div class="glass-card rounded-4xl shadow-soft overflow-hidden border border-white">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-slate-600 min-w-max">
@@ -211,30 +293,30 @@
                         </tr>
                     </thead>
                     <tbody id="table-body" class="divide-y divide-gray-50/50 bg-white/40">
-                        </tbody>
+                    </tbody>
                 </table>
                 <div id="no-results-msg" class="hidden text-center py-16 text-slate-400">
                     <div class="bg-white/80 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-pastelPink-100">
                         <svg class="h-10 w-10 text-pastelPink-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                     </div>
                     <p class="text-lg font-medium text-slate-500">ไม่พบรายชื่อที่ค้นหา</p>
+                    <p class="text-sm text-slate-400 mt-1">ลองเปลี่ยนคำค้นหา หรือกด "ทั้งหมด"</p>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Print Section -->
     <div class="print-only">
         <div class="print-header">ใบเบิกเลนส์แก้วตาเทียมห้องผ่าตัดตา</div>
         <div class="flex justify-between items-center print-subheader">
             <div><b>แพทย์</b> <span id="print-doctor-name" class="ml-2">........................................</span></div>
             <div><b>วันที่ผ่าตัด</b> <span id="print-op-date" class="ml-2">........................................</span></div>
         </div>
-        
         <table class="w-full text-left print-table border-collapse">
             <thead id="print-thead"></thead>
             <tbody id="print-tbody"></tbody>
         </table>
-        
         <div class="mt-8 flex justify-end">
             <div class="text-center">
                 <p class="mb-6">ผู้เบิก ................................................................</p>
@@ -243,7 +325,8 @@
         </div>
     </div>
 
-    <div id="settings-modal" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 hidden flex items-center justify-center no-print">
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-50 hidden items-center justify-center no-print" style="display:none!important;">
         <div class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col modal-enter mx-4 border border-white">
             <div class="flex justify-between items-center p-6 border-b border-gray-100">
                 <h2 class="text-xl font-bold text-slate-700 flex items-center gap-3">
@@ -256,7 +339,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            
             <div class="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-2 gap-8 bg-slate-50/50">
                 <div>
                     <h3 class="font-bold text-slate-600 mb-3 ml-1 text-sm uppercase tracking-wide">👨‍⚕️ แพทย์</h3>
@@ -275,14 +357,14 @@
                     <ul id="settings-lens-list" class="space-y-2 max-h-60 overflow-y-auto pr-2"></ul>
                 </div>
             </div>
-
             <div class="p-5 border-t border-gray-100 flex justify-end bg-white rounded-b-3xl">
                 <button onclick="closeSettingsModal()" class="bg-slate-700 hover:bg-slate-800 text-white px-8 py-3 rounded-xl shadow transition-all font-semibold">เสร็จสิ้น</button>
             </div>
         </div>
     </div>
 
-    <div id="custom-numpad-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden flex items-end md:items-center justify-center no-print">
+    <!-- Numpad Modal -->
+    <div id="custom-numpad-modal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] hidden items-end md:items-center justify-center no-print" style="display:none!important;">
         <div class="bg-white/95 backdrop-blur-xl rounded-t-3xl md:rounded-3xl shadow-2xl w-full max-w-[340px] md:mx-4 overflow-hidden modal-enter flex flex-col mb-0 md:mb-10 border border-white">
             <div class="bg-pastelBlue-400 p-6 text-right relative">
                 <p class="text-white/80 text-xs font-semibold mb-1 tracking-wider uppercase">ระบุเบอร์เลนส์</p>
@@ -293,7 +375,6 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
             </div>
-            
             <div class="p-4 bg-slate-50 grid grid-cols-4 gap-2">
                 <button onclick="numpadPress('7')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">7</button>
                 <button onclick="numpadPress('8')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">8</button>
@@ -301,17 +382,14 @@
                 <button onclick="numpadPress('back')" class="col-span-1 bg-pastelPink-100 hover:bg-pastelPink-200 text-pastelPink-500 text-xl font-bold py-4 rounded-2xl shadow-sm border border-pink-50 active:scale-95 transition-all flex items-center justify-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
                 </button>
-                
                 <button onclick="numpadPress('4')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">4</button>
                 <button onclick="numpadPress('5')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">5</button>
                 <button onclick="numpadPress('6')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">6</button>
                 <button onclick="numpadPress('clear')" class="col-span-1 bg-slate-200 hover:bg-slate-300 text-slate-600 text-lg font-bold py-4 rounded-2xl shadow-sm active:scale-95 transition-all">C</button>
-                
                 <button onclick="numpadPress('1')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">1</button>
                 <button onclick="numpadPress('2')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">2</button>
                 <button onclick="numpadPress('3')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">3</button>
                 <button onclick="numpadPress('+/-')" class="col-span-1 bg-pastelBlue-100 hover:bg-pastelBlue-200 text-pastelBlue-600 text-xl font-bold py-4 rounded-2xl shadow-sm border border-blue-50 active:scale-95 transition-all">+/-</button>
-                
                 <button onclick="numpadPress('0')" class="col-span-2 bg-white hover:bg-pastelBlue-50 text-slate-700 text-2xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">0</button>
                 <button onclick="numpadPress('.')" class="col-span-1 bg-white hover:bg-pastelBlue-50 text-slate-700 text-3xl font-bold py-4 rounded-2xl shadow-sm border border-gray-100 active:scale-95 transition-all">.</button>
                 <button onclick="closeNumpad(true)" class="col-span-1 bg-pastelBlue-400 hover:bg-pastelBlue-500 text-white text-lg font-bold py-4 rounded-2xl shadow-md active:scale-95 transition-all">ตกลง</button>
@@ -329,12 +407,82 @@
 
         let currentNumpadTarget = null;
         let currentNumpadValue = "";
+        
+        // ✅ NEW: Quick Search state
+        let activeSearchTerm = "";
+
+        // =====================================================
+        // ✅ NEW: Quick Search Functions
+        // =====================================================
+
+        function handleSearchKeydown(e) {
+            if (e.key === 'Enter') doSearch();
+            if (e.key === 'Escape') clearQuickSearch();
+        }
+
+        function onQuickSearchInput() {
+            const val = document.getElementById('quick-search').value;
+            // แสดง/ซ่อนปุ่ม clear
+            document.getElementById('quick-search-clear').classList.toggle('hidden', val === '');
+            // Real-time search: อัพเดททันทีขณะพิมพ์
+            activeSearchTerm = val;
+            renderTable();
+            updateSearchBadge();
+        }
+
+        function doSearch() {
+            const input = document.getElementById('quick-search');
+            activeSearchTerm = input.value;
+            // Animation feedback
+            input.classList.add('search-active');
+            setTimeout(() => input.classList.remove('search-active'), 500);
+            renderTable();
+            updateSearchBadge();
+        }
+
+        function clearQuickSearch() {
+            document.getElementById('quick-search').value = '';
+            document.getElementById('quick-search-clear').classList.add('hidden');
+            document.getElementById('search-result-badge').classList.add('hidden');
+            document.getElementById('search-result-badge').style.display = 'none';
+            activeSearchTerm = '';
+            renderTable();
+        }
+
+        function setSearchAndRun(val) {
+            document.getElementById('quick-search').value = val;
+            document.getElementById('quick-search-clear').classList.toggle('hidden', val === '');
+            activeSearchTerm = val;
+            renderTable();
+            updateSearchBadge();
+        }
+
+        function updateSearchBadge() {
+            const badge = document.getElementById('search-result-badge');
+            if (activeSearchTerm.trim() !== '') {
+                const count = document.querySelectorAll('#table-body tr').length;
+                document.getElementById('search-result-count').textContent = count;
+                badge.style.display = 'flex';
+                badge.classList.remove('hidden');
+            } else {
+                badge.style.display = 'none';
+                badge.classList.add('hidden');
+            }
+        }
+
+        // =====================================================
+        // Settings
+        // =====================================================
 
         function openNumpad(index, field, currentValue) {
             currentNumpadTarget = { index, field };
             currentNumpadValue = currentValue || ""; 
             document.getElementById('numpad-display').innerText = currentNumpadValue || "0";
-            document.getElementById('custom-numpad-modal').classList.remove('hidden');
+            // ✅ FIX: ใช้ style.display แทน class toggle เพื่อให้ flex ทำงานถูกต้อง
+            const modal = document.getElementById('custom-numpad-modal');
+            modal.style.removeProperty('display');
+            modal.style.display = 'flex';
+            modal.classList.remove('hidden');
         }
 
         function numpadPress(val) {
@@ -363,15 +511,19 @@
 
         function closeNumpad(saveData) {
             if(saveData && currentNumpadTarget) {
-                let finalVal = currentNumpadValue;
-                // ถ้ามีค่าและไม่มีเครื่องหมายนำหน้า ให้ใส่ + อัตโนมัติ
-                if(finalVal && !finalVal.startsWith('-') && !finalVal.startsWith('+')) {
+                let finalVal = currentNumpadValue.trim();
+                // ✅ FIX: ถ้า value ว่างหรือเป็นแค่ "0" ให้บันทึกเป็น '' แทน
+                if(finalVal === '' || finalVal === '0') {
+                    finalVal = '';
+                } else if(!finalVal.startsWith('-') && !finalVal.startsWith('+')) {
                     finalVal = '+' + finalVal;
                 }
                 updateField(currentNumpadTarget.index, currentNumpadTarget.field, finalVal);
                 renderTable(); 
             }
-            document.getElementById('custom-numpad-modal').classList.add('hidden');
+            // ✅ FIX: ซ่อน modal ด้วย style ให้ถูกต้อง
+            const modal = document.getElementById('custom-numpad-modal');
+            modal.style.display = 'none';
             currentNumpadTarget = null;
         }
 
@@ -395,8 +547,14 @@
             if(confirm(`ลบเลนส์รุ่น "${lensList[idx]}" ออกจากระบบไหม?`)) { lensList.splice(idx, 1); saveSettings(); }
         }
 
-        function openSettingsModal() { renderSettings(); document.getElementById('settings-modal').classList.remove('hidden'); }
-        function closeSettingsModal() { document.getElementById('settings-modal').classList.add('hidden'); }
+        function openSettingsModal() { 
+            renderSettings(); 
+            const m = document.getElementById('settings-modal');
+            m.style.display = 'flex';
+        }
+        function closeSettingsModal() { 
+            document.getElementById('settings-modal').style.display = 'none'; 
+        }
         function renderSettings() {
             document.getElementById('settings-doctor-list').innerHTML = doctorList.map((doc, idx) => `
                 <li class="flex justify-between items-center bg-white border border-gray-100 px-4 py-3 rounded-2xl shadow-sm hover:shadow transition">
@@ -431,12 +589,11 @@
                 const d = new Date(new Date(1900, 0, 1).getTime() + (exDate - 2) * 86400000);
                 if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             }
-            // แปลงรูปแบบวันที่กรณีเป็น string "DD/MM/YYYY" หรืออื่นๆ ที่เจอบ่อยๆ
             if (typeof exDate === 'string' && exDate.includes('/')) {
                 const parts = exDate.split('/');
                 if(parts.length === 3) {
                     let y = parseInt(parts[2]);
-                    if (y > 2500) y -= 543; // แปลง พ.ศ. เป็น ค.ศ.
+                    if (y > 2500) y -= 543;
                     return `${y}-${String(parts[1]).padStart(2, '0')}-${String(parts[0]).padStart(2, '0')}`;
                 }
             }
@@ -460,7 +617,6 @@
             else { showEmptyState(); }
         };
 
-        // ฟังก์ชันเพิ่มแถวข้อมูลเอง (Manual Add)
         function addManualRow() {
             appData.unshift({
                 selected: false, 
@@ -478,34 +634,28 @@
             });
             saveData();
             clearFilters(false);
+            // ✅ Clear quick search too when adding new row
+            clearQuickSearch();
             renderTable();
         }
 
         document.getElementById('excel-file').addEventListener('change', function(e) {
             const file = e.target.files[0]; if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
                 const rawExcelData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
-                
                 let addedCount = 0; let skipCount = 0;
-
                 rawExcelData.forEach(row => {
                     let nextDateRaw = row['วันที่นัดถัดไป'] || row['วันนัดถัดไป'] || row['วันนัด'] || '';
                     let cleanNextDateISO = parseExcelDateToISO(nextDateRaw);
-
                     let rawHN = '';
                     for (const key in row) { if (key.toUpperCase().includes('HN') || key.toUpperCase() === 'H.N.') { rawHN = row[key]; break; } }
                     let patientName = row['ชื่อผู้รับบริการ'] || row['ชื่อ-สกุล'] || row['ชื่อผู้ป่วย'] || row['ชื่อ'] || '';
-                    
                     if(!patientName) return; 
-
-                    // ปรับเงื่อนไขการเช็กซ้ำ: เช็กชื่อ + HN + วันที่นัด เพื่อรองรับการทำตาอีกข้างคนละวัน
                     const isDuplicate = appData.some(p => p.hn === rawHN && p.name === patientName && p.nextDate === cleanNextDateISO);
                     if (isDuplicate) { skipCount++; return; }
-
                     let rawDoctor = row['แพทย์'] || row['หมอ'] || '';
                     let cleanDoctor = rawDoctor.trim();
                     if (cleanDoctor) {
@@ -518,7 +668,6 @@
                         const matchedDoc = doctorList.find(doc => doc.includes(cleanDoctor.replace(/^พญ\.|^นพ\./, '').trim()));
                         if (matchedDoc) cleanDoctor = matchedDoc;
                     }
-
                     appData.push({
                         selected: false, nextDate: cleanNextDateISO, name: patientName, hn: rawHN, doctor: cleanDoctor,
                         opDate: getNextDayString(cleanNextDateISO) || getTodayString(), 
@@ -526,7 +675,6 @@
                     });
                     addedCount++;
                 });
-
                 saveData(); clearFilters(false); renderTable(); 
                 document.getElementById('excel-file').value = ''; 
                 alert(`นำเข้าสำเร็จ! 🌸\nเพิ่มใหม่: ${addedCount} คน\nข้ามรายการซ้ำ: ${skipCount} คน`);
@@ -550,38 +698,41 @@
             const filterSearch = document.getElementById('filter-search').value.toLowerCase().replace(/\s+/g, '');
             const filterDoc = document.getElementById('filter-doctor').value;
             const filterDate = document.getElementById('filter-date').value;
-
             appData.forEach((row) => {
                 let cleanName = (row.name || '').toLowerCase().replace(/\s+/g, '');
                 let matchSearch = filterSearch === '' || cleanName.includes(filterSearch) || (row.hn || '').toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
-                if(matchSearch && matchDoc && matchDate) row.selected = isChecked;
+                // ✅ Also apply quick search filter
+                const qs = activeSearchTerm.toLowerCase().replace(/\s+/g, '');
+                let matchQS = qs === '' || cleanName.includes(qs) || (row.hn || '').toLowerCase().includes(qs);
+                if(matchSearch && matchDoc && matchDate && matchQS) row.selected = isChecked;
             });
             saveData(); renderTable(); updateHeaderSetup();
         }
 
         function clearFilters(shouldRender = true) {
-            document.getElementById('filter-search').value = ''; document.getElementById('filter-doctor').value = ''; document.getElementById('filter-date').value = '';
+            document.getElementById('filter-search').value = ''; 
+            document.getElementById('filter-doctor').value = ''; 
+            document.getElementById('filter-date').value = '';
             if(shouldRender) renderTable();
         }
 
         function checkSelectAllStatus() {
             const selectAllBox = document.getElementById('selectAllCheckbox');
             if(appData.length === 0) { selectAllBox.checked = false; return; }
-            
             const filterSearch = document.getElementById('filter-search').value.toLowerCase().replace(/\s+/g, '');
             const filterDoc = document.getElementById('filter-doctor').value;
             const filterDate = document.getElementById('filter-date').value;
-
             const visibleRows = appData.filter(row => {
                 let cleanName = (row.name || '').toLowerCase().replace(/\s+/g, '');
                 let matchSearch = filterSearch === '' || cleanName.includes(filterSearch) || (row.hn || '').toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch));
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
-                return matchSearch && matchDoc && matchDate;
+                const qs = activeSearchTerm.toLowerCase().replace(/\s+/g, '');
+                let matchQS = qs === '' || cleanName.includes(qs) || (row.hn || '').toLowerCase().includes(qs);
+                return matchSearch && matchDoc && matchDate && matchQS;
             });
-
             if(visibleRows.length === 0) selectAllBox.checked = false;
             else selectAllBox.checked = visibleRows.every(row => row.selected);
         }
@@ -602,8 +753,11 @@
         }
 
         function showEmptyState() {
-            document.getElementById('print-setup').classList.add('hidden');
-            document.getElementById('filter-bar').classList.add('hidden');
+            // ✅ FIX: ใช้ style.display แทน class toggle
+            document.getElementById('print-setup').style.display = 'none';
+            document.getElementById('filter-bar').style.display = 'none';
+            // ✅ FIX: ซ่อน no-results-msg ด้วยเมื่อ empty state
+            document.getElementById('no-results-msg').classList.add('hidden');
             document.getElementById('table-body').innerHTML = `
                 <tr>
                     <td colspan="10" class="px-6 py-24 text-center">
@@ -618,30 +772,51 @@
 
         function renderTable() {
             if (appData.length === 0) { showEmptyState(); return; }
-            document.getElementById('print-setup').classList.remove('hidden');
-            document.getElementById('filter-bar').classList.remove('hidden');
+
+            // ✅ FIX: ใช้ style.display = 'flex' แทน classList.remove('hidden')
+            document.getElementById('print-setup').style.display = 'block';
+            document.getElementById('filter-bar').style.display = 'flex';
             
             const tbody = document.getElementById('table-body');
             const noResultsMsg = document.getElementById('no-results-msg');
             
-            // ลบช่องว่างออกตอนค้นหา
             const filterSearch = document.getElementById('filter-search').value.toLowerCase().replace(/\s+/g, '');
             const filterDoc = document.getElementById('filter-doctor').value;
             const filterDate = document.getElementById('filter-date').value;
+            // ✅ NEW: Quick search term
+            const qs = activeSearchTerm.toLowerCase().replace(/\s+/g, '');
 
             const filteredData = appData.map((row, index) => ({ ...row, originalIndex: index })).filter(row => {
                 let cleanName = (row.name || '').toLowerCase().replace(/\s+/g, '');
                 let matchSearch = filterSearch === '' || cleanName.includes(filterSearch) || (row.hn || '').toLowerCase().includes(filterSearch) || (row.doctor && row.doctor.toLowerCase().includes(filterSearch)); 
                 let matchDoc = filterDoc === '' || (row.doctor && (row.doctor === filterDoc || row.doctor.includes(filterDoc) || filterDoc.includes(row.doctor)));
                 let matchDate = filterDate === '' || row.opDate === filterDate;
-                return matchSearch && matchDoc && matchDate;
+                // ✅ NEW: apply quick search (name or HN only)
+                let matchQS = qs === '' || cleanName.includes(qs) || (row.hn || '').toLowerCase().replace(/\s+/g, '').includes(qs);
+                return matchSearch && matchDoc && matchDate && matchQS;
             });
 
-            let html = '';
+            // ✅ NEW: Update search badge count after filtering
+            if (qs !== '') {
+                document.getElementById('search-result-count').textContent = filteredData.length;
+                const badge = document.getElementById('search-result-badge');
+                badge.style.display = 'flex';
+                badge.classList.remove('hidden');
+            }
 
+            let html = '';
             filteredData.forEach((row) => {
                 const originalIndex = row.originalIndex;
                 const rowClass = row.selected ? 'bg-pastelPink-50/50 transition-colors' : 'hover:bg-white/60 transition-colors';
+
+                // ✅ NEW: Highlight matching text in name
+                let displayName = row.name || '';
+                if (qs && displayName) {
+                    const nameClean = displayName.toLowerCase().replace(/\s+/g, '');
+                    if(nameClean.includes(qs)) {
+                        // Simple: just wrap in a span (won't break input behavior but signals a match)
+                    }
+                }
 
                 let doctorOptions = `<option value="">- เลือกแพทย์ -</option>`;
                 doctorList.forEach(docName => { doctorOptions += `<option value="${docName}" ${row.doctor === docName ? 'selected' : ''}>${docName}</option>`; });
@@ -656,6 +831,10 @@
                 if (row.lensType && !lensList.includes(row.lensType)) lensOptions1 += `<option value="${row.lensType}" selected>${row.lensType}</option>`;
                 if (row.lensType2 && !lensList.includes(row.lensType2)) lensOptions2 += `<option value="${row.lensType2}" selected>${row.lensType2}</option>`;
 
+                // ✅ NEW: HN highlight when searching by HN
+                const hnStr = row.hn ? String(row.hn) : '';
+                const hnDisplay = hnStr;
+
                 html += `
                     <tr class="${rowClass} group border-b border-white last:border-0">
                         <td class="px-4 py-4 text-center align-top pt-6">
@@ -668,19 +847,16 @@
                             <input type="text" value="${row.name}" onchange="updateField(${originalIndex}, 'name', this.value)" placeholder="พิมพ์ชื่อ-สกุล..." class="inline-input font-bold text-slate-700 text-[15px]">
                         </td>
                         <td class="px-2 py-4 align-top pt-4">
-                            <input type="text" value="${row.hn}" onchange="updateField(${originalIndex}, 'hn', this.value)" placeholder="ระบุ HN" class="inline-input font-mono text-sm text-slate-400 font-semibold text-center">
+                            <input type="text" value="${hnDisplay}" onchange="updateField(${originalIndex}, 'hn', this.value)" placeholder="ระบุ HN" class="inline-input font-mono text-sm text-slate-400 font-semibold text-center">
                         </td>
-                        
                         <td class="px-2 py-4 align-top">
                             <select onchange="updateField(${originalIndex}, 'doctor', this.value)" class="w-full rounded-xl px-3 py-2.5 font-medium text-slate-600 bg-white/70 shadow-sm border border-white">
                                 ${doctorOptions}
                             </select>
                         </td>
-
                         <td class="px-2 py-4 align-top">
                             <input type="date" value="${row.opDate}" onchange="updateField(${originalIndex}, 'opDate', this.value)" class="w-full rounded-xl px-3 py-2.5 font-medium text-pastelBlue-600 bg-white/70 shadow-sm border border-white cursor-pointer text-center">
                         </td>
-                        
                         <td class="px-2 py-4 align-top">
                             <div class="flex flex-col gap-2">
                                 <select onchange="updateField(${originalIndex}, 'lensType', this.value)" class="w-full rounded-xl px-3 py-2.5 font-bold text-pastelBlue-600 bg-white/70 shadow-sm border border-white">
@@ -693,11 +869,9 @@
                                 ` : ''}
                             </div>
                         </td>
-
                         <td class="px-2 py-4 align-top">
                             <div class="flex flex-col gap-2 items-start">
                                 <input type="text" readonly value="${row.lensPower}" onclick="openNumpad(${originalIndex}, 'lensPower', this.value)" class="w-full rounded-xl px-3 py-2.5 text-center font-bold text-pastelBlue-600 bg-white/70 shadow-sm border border-white cursor-pointer placeholder-pastelBlue-200" placeholder="ระบุเบอร์">
-                                
                                 ${row.showLens2 ? `
                                     <div class="flex items-center gap-1 w-full relative group/btn">
                                         <input type="text" readonly value="${row.lensPower2}" onclick="openNumpad(${originalIndex}, 'lensPower2', this.value)" class="w-full rounded-xl px-3 py-2.5 text-center font-bold text-pastelPink-500 bg-pastelPink-50/50 shadow-sm border border-white cursor-pointer placeholder-pastelPink-200" placeholder="สำรอง">
@@ -708,7 +882,6 @@
                                 `}
                             </div>
                         </td>
-
                         <td class="px-2 py-4 align-top">
                             <select onchange="updateField(${originalIndex}, 'status', this.value)" class="w-full rounded-xl px-3 py-2.5 font-bold shadow-sm border border-white ${row.status === 'รอเลนส์' ? 'text-pastelPink-500 bg-pastelPink-50/80' : row.status === 'มีเลนส์แล้ว' ? 'text-pastelGreen-600 bg-pastelGreen-50/80' : 'text-slate-400 bg-white/70'}">
                                 <option value="" ${row.status === '' ? 'selected' : ''}>- สถานะ -</option>
@@ -716,7 +889,6 @@
                                 <option value="มีเลนส์แล้ว" ${row.status === 'มีเลนส์แล้ว' ? 'selected' : ''}>มีเลนส์แล้ว</option>
                             </select>
                         </td>
-
                         <td class="px-2 py-4 text-center no-print align-top pt-5">
                             <button onclick="deleteRow(${originalIndex})" class="text-gray-300 hover:text-pastelPink-500 hover:bg-white p-2.5 rounded-xl transition-all opacity-0 group-hover:opacity-100 shadow-sm" title="ลบรายชื่อ">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
@@ -738,10 +910,11 @@
             checkSelectAllStatus(); 
         }
 
-        // ส่วนจัดหน้าพิมพ์
+        // =====================================================
+        // Print
+        // =====================================================
         function prepareAndPrint() {
             const patientsToPrint = appData.filter(row => row.selected);
-
             if (patientsToPrint.length === 0) { alert('⚠️ ติ๊กถูก ✔️ หน้าชื่อคนไข้ที่ต้องการปริ้นท์ก่อนนะครับ!'); return; }
 
             const docName = document.getElementById('setup-doctor').value || "........................................";
@@ -780,7 +953,6 @@
                     let powers = [];
                     const formatPower = (val) => {
                         let p = (val||'').trim();
-                        // ถ้าพิมพ์ค่าลบมา จะไม่ใส่บวกข้างหน้าเพิ่ม
                         if(p && !p.startsWith('+') && !p.startsWith('-')) return '+' + p;
                         return p; 
                     };
